@@ -1,0 +1,207 @@
+<?php
+
+/**
+ * BorgerdkArticle class.
+ */
+class BorgerdkArticleController extends EntityAPIController {
+
+  public function create(array $values = array()) {
+    $values += array(
+      'title' => '',
+      'created' => REQUEST_TIME,
+      'changed' => REQUEST_TIME,
+      'resynch' => TRUE,
+    );
+    return parent::create($values);
+  }
+
+  public function save($entity) {
+    $entity->changed = REQUEST_TIME;
+    return parent::save($entity);
+  }
+
+  public function buildContent($entity, $view_mode = 'full', $langcode = NULL, $content = array()) {
+    $weight = 0;
+
+    $default = array(
+      '#language' => LANGUAGE_NONE,
+      '#label_display' => 'above',
+      '#entity_type' => 'borgerdk_article',
+      '#bundle' => 'borgerdk_article',
+    );
+
+    $content['entity_id'] = array(
+        '#theme' => 'field',
+        '#weight' => $weight++,
+        '#title' =>t('Entity ID'),
+        '#field_name' => 'entity_id',
+        '#field_type' => 'text',
+        '#items' => array(array('value' => $entity->entity_id)),
+        '#formatter' => 'text_default',
+        0 => array('#markup' => check_plain($entity->entity_id))
+      ) + $default;
+
+    $content['title'] = array(
+        '#theme' => 'field',
+        '#weight' => $weight++,
+        '#title' =>t('Title'),
+        '#field_name' => 'title',
+        '#field_type' => 'text',
+        '#items' => array(array('value' => $entity->title)),
+        '#formatter' => 'text_default',
+        0 => array('#markup' => check_plain($entity->title))
+      )  + $default;
+
+    $content['header'] = array(
+        '#theme' => 'field',
+        '#weight' => $weight++,
+        '#title' =>t('Header'),
+        '#field_name' => 'header',
+        '#field_type' => 'text',
+        '#items' => array(array('value' => $entity->header)),
+        '#formatter' => 'text_default',
+        0 => array('#markup' => check_plain($entity->header))
+      ) + $default;
+
+    $content['articleUrl'] = array(
+        '#theme' => 'field',
+        '#weight' => $weight++,
+        '#title' =>t('Article URL'),
+        '#field_name' => 'articleUrl',
+        '#field_type' => 'text',
+        '#items' => array(array('value' => $entity->articleUrl)),
+        '#formatter' => 'text_default',
+        0 => array('#markup' =>  l($entity->articleUrl, $entity->articleUrl, array('attributes' => array('target'=>'_blank'))))
+      ) + $default;
+
+    $content['legislation'] = array(
+        '#theme' => 'field',
+        '#weight' => $weight++,
+        '#title' =>t('Legislation'),
+        '#field_name' => 'legislation',
+        '#field_type' => 'text',
+        '#items' => array(array('value' => $entity->legislation)),
+        '#formatter' => 'text_default',
+        0 => array('#markup' => strip_tags($entity->legislation))
+      ) + $default;
+
+    $content['recommendation'] = array(
+        '#theme' => 'field',
+        '#weight' => $weight++,
+        '#title' =>t('Recommendation'),
+        '#field_name' => 'recommendation',
+        '#field_type' => 'text',
+        '#items' => array(array('value' => $entity->recommendation)),
+        '#formatter' => 'text_default',
+        0 => array('#markup' => strip_tags($entity->recommendation))
+      ) + $default;
+
+    $content['byline'] = array(
+        '#theme' => 'field',
+        '#weight' => $weight++,
+        '#title' =>t('Byline'),
+        '#field_name' => 'byline',
+        '#field_type' => 'text',
+        '#items' => array(array('value' => $entity->byline)),
+        '#formatter' => 'text_default',
+        0 => array('#markup' => check_plain($entity->byline))
+      ) + $default;
+
+    $microarticle_entities = borgerdk_microarticle_load_multiple(false, array('article_id' => $entity->entity_id));
+    if (!empty($microarticle_entities)) {
+      if ($view_mode == 'full') {
+        $content['microarticles'] = array(
+            '#theme' => 'field',
+            '#weight' => $weight++,
+            '#title' => t('Microarticles'),
+            '#field_name' => 'microarticles',
+            '#field_type' => 'entityreference',
+            '#formatter' => 'entityreference_entity_view',
+          ) + $default;
+        foreach($microarticle_entities as $id => $ma) {
+          $content['microarticles']['#items'][$id] = array('target_id' => $id, $ma);
+          $content['microarticles'][$id] = entity_view('borgerdk_microarticle', array(entity_id('borgerdk_microarticle', $ma) => $ma), 'teaser');
+        }
+
+      } else if ($view_mode == 'basic_info') {
+        $microarticles_links = array();
+        foreach($microarticle_entities as $ma) {
+          $microarticles_links[$ma->entity_id] = array(
+            'title' => $ma->title,
+            'href' => entity_uri('borgerdk_microarticle', $ma)['path'],
+          );
+        }
+
+        $content['microarticles'] = array(
+            '#theme' => 'links',
+            '#weight' => $weight++,
+            '#heading' => array('text' => 'Microarticles', 'level' => 'h2'),
+            '#field_name' => 'microarticles',
+            '#field_type' => 'links',
+            '#links' => $microarticles_links,
+          ) + $default;
+      }
+    }
+
+    $selfservice_link_entities = borgerdk_selfservice_load_multiple(false, array('article_id' => $entity->entity_id, 'microarticle_id' => null));
+    if (!(empty($selfservice_link_entities))) {
+      if ($view_mode == 'full') {
+        $content['selfservices'] = array(
+            '#theme' => 'field',
+            '#weight' => $weight++,
+            '#title' => t('Self-services'),
+            '#field_name' => 'selfservices',
+            '#field_type' => 'entityreference',
+            '#formatter' => 'entityreference_entity_view',
+          ) + $default;
+        foreach($selfservice_link_entities as $id => $ss) {
+          $content['selfservices']['#items'][$id] = array('target_id' => $id, $ss);
+          $content['selfservices'][$id] = entity_view('borgerdk_selfservice', array(entity_id('borgerdk_selfservice', $ss) => $ss), 'teaser');
+        }
+      } else if ($view_mode == 'basic_info'){
+        $selfservice_links = array();
+        foreach($selfservice_link_entities as $ss) {
+          $selfservice_links[$ss->entity_id] = array(
+            'title' => $ss->title,
+            'href' => entity_uri('borgerdk_selfservice', $ss)['path'],
+          );
+        }
+
+        if (!empty($selfservice_links)) {
+          $content['selfservices'] = array(
+              '#theme' => 'links',
+              '#weight' => $weight++,
+              '#heading' => array('text' => 'Selfservices', 'level' => 'h2'),
+              '#field_name' => 'selfservices',
+              '#field_type' => 'links',
+              '#links' => $selfservice_links,
+            ) + $default;
+        }
+      }
+    }
+
+    $content['publishingDate'] = array(
+        '#theme' => 'field',
+        '#weight' => $weight++,
+        '#title' =>t('Publishing Date (Borger.dk)'),
+        '#field_name' => 'publishingDate',
+        '#field_type' => 'text',
+        '#items' => array(array('value' => $entity->publishingDate)),
+        '#formatter' => 'text_default',
+        0 => array('#markup' => format_date($entity->publishingDate))
+      ) + $default;
+
+    $content['lastUpdated'] = array(
+        '#theme' => 'field',
+        '#weight' => $weight++,
+        '#title' =>t('Last Updated (Borger.dk)'),
+        '#field_name' => 'lastUpdated',
+        '#field_type' => 'text',
+        '#items' => array(array('value' => $entity->lastUpdated)),
+        '#formatter' => 'text_default',
+        0 => array('#markup' => format_date($entity->lastUpdated))
+      ) + $default;
+
+    return parent::buildContent($entity, $view_mode, $langcode, $content);
+  }
+}

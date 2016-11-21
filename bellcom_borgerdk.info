@@ -1,0 +1,14 @@
+name = Bellcom Borger.dk
+description = Integration of Borger.dk portal
+package = Bellcom
+core = 7.x
+dependencies[] = entity
+files[] = entities/BorgerdkArticleEntity.php
+files[] = controllers/BorgerdkArticleController.php
+files[] = controllers/BorgerdkArticleUIController.php
+files[] = entities/BorgerdkMicroarticleEntity.php
+files[] = controllers/BorgerdkMicroarticleController.php
+files[] = controllers/BorgerdkMicroarticleUIController.php
+files[] = entities/BorgerdkSelfserviceEntity.php
+files[] = controllers/BorgerdkSelfserviceController.php
+files[] = controllers/BorgerdkSelfserviceUIController.php

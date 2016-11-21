@@ -1,0 +1,5 @@
+{
+    "require": {
+        "ffwagency/borgerdk-php": ">=1.0.0"
+    }
+}

@@ -1,0 +1,194 @@
+<?php
+define('BELLCOM_BORGERDK_QUEUE', 'bellcom_borgerdk_cron_queue');
+
+/**
+ * Implements hook_uninstall().
+ */
+function bellcom_borgerdk_uninstall() {
+  drupal_uninstall_schema('bellcom_borgerdk');
+
+  $queue = DrupalQueue::get(BELLCOM_BORGERDK_QUEUE);
+  $queue->deleteQueue();
+}
+
+/**
+ * Implements hook_schema().
+ */
+function bellcom_borgerdk_schema() {
+  $schema = array();
+
+  $schema['borgerdk_article'] = array(
+    'description' => 'Keeps the information about Borger.dk articles.',
+    'fields' => array(
+      'entity_id' => array(
+        'description' => 'Primary key and id, taken from Borger.dk',
+        'type' => 'int',
+        'not null' => TRUE,
+      ),
+      'title' => array(
+        'description' => 'A title for the item, taken from Borger.dk',
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => TRUE,
+        'default' => '',
+      ),
+      'header' => array(
+        'description' => 'A header for the item, taken from Borger.dk',
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => TRUE,
+        'default' => '',
+      ),
+      'articleUrl' => array(
+        'description' => 'The URL of the article, taken from Borger.dk',
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => TRUE,
+        'default' => '',
+      ),
+      'legislation' => array(
+        'description' => 'Legislation section of article, taken from Borger.dk',
+        'type' => 'text',
+        'size' => 'big',
+      ),
+      'recommendation' => array(
+        'description' => 'Recommendation section of article, taken from Borger.dk',
+        'type' => 'text',
+        'size' => 'big',
+      ),
+      'byline' => array(
+        'description' => 'The byline of the article, taken from Borger.dk',
+        'type' => 'varchar',
+        'length' => 255,
+      ),
+      'lastUpdated' => array(
+        'description' => 'The Unix timestamp of the entity last updated date, taken from Borger.dk',
+        'type' => 'int',
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+      'publishingDate' => array(
+        'description' => 'The Unix timestamp of the entity publishing date, taken from Borger.dk',
+        'type' => 'int',
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+      'resynch' => array(
+        'description' => 'The flag indicating that this article is behind its version from Borger.dk',
+        'type' => 'int',
+        'not null' => TRUE,
+        'default' => 0,
+        'size' => 'tiny',
+      ),
+      'changed' => array(
+        'description' => 'The Unix timestamp of the entity changed time.',
+        'type' => 'int',
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+      'created' => array(
+        'description' => 'The Unix timestamp of the entity created time.',
+        'type' => 'int',
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+    ),
+    'primary key' => array('entity_id'),
+  );
+
+  $schema['borgerdk_microarticle'] = array(
+    'description' => 'Keeps the information about Borger.dk mircoarticles.',
+    'fields' => array(
+      'entity_id' => array(
+        'description' => 'Primary key and id, taken from Borger.dk',
+        'type' => 'varchar',
+        'length' => 50,
+        'not null' => TRUE,
+      ),
+      'title' => array(
+        'description' => 'A title for the microarticle, taken from Borger.dk',
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => TRUE,
+        'default' => '',
+      ),
+      'content' => array(
+        'description' => 'Content of the microarticle, taken from Borger.dk',
+        'type' => 'text',
+        'size' => 'big',
+      ),
+      'article_id' => array(
+        'description' => 'Foreign key to borgerdk_article entity_id',
+        'type' => 'int',
+      ),
+    ),
+    'primary key' => array('entity_id'),
+  );
+
+  $schema['borgerdk_selfservice'] = array(
+    'description' => 'Keeps the information about Borger.dk self-service links.',
+    'fields' => array(
+      'entity_id' => array(
+        'description' => 'Primary key and id, taken from Borger.dk',
+        'type' => 'varchar',
+        'length' => 50,
+        'not null' => TRUE,
+      ),
+      'title' => array(
+        'description' => 'A title (href title attribute) for the self-service, taken from Borger.dk',
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => TRUE,
+        'default' => '',
+      ),
+      'label' => array(
+        'description' => 'A label for the self-service, taken from Borger.dk',
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => TRUE,
+        'default' => '',
+      ),
+      'url' => array(
+        'description' => 'The URL of the self-service, taken from Borger.dk',
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => TRUE,
+        'default' => '',
+      ),
+      'article_id' => array(
+        'description' => 'Foreign key to borgerdk_article entity_id',
+        'type' => 'int',
+      ),
+      'microarticle_id' => array(
+        'description' => 'Foreign key to borgerdk_microarticle entity_id',
+        'type' => 'varchar',
+        'length' => 50,
+      ),
+    ),
+    'primary key' => array('entity_id'),
+  );
+
+  return $schema;
+}
+
+/**
+ * Implements hook_field_schema().
+ */
+function bellcom_borgerdk_field_schema($field) {
+  return array(
+    'columns' => array(
+      'borgerdk_article_entity_id' => array(
+        'type' => 'int',
+        'not null' => TRUE,
+      ),
+      'borgerdk_microarticle_entity_ids' => array(
+        'type' => 'text',
+        'size' => 'normal'
+      ),
+      'borgerdk_selfservice_entity_ids' => array(
+        'type' => 'text',
+        'size' => 'normal'
+      ),
+    ),
+  );
+}
