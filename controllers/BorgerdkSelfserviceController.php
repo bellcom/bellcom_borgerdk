@@ -12,7 +12,7 @@ class BorgerdkSelfserviceController extends BorgerdkAbstractEntityController {
 
       $entity->entity_id = parent::generateEntityId($entity);
     }
-    if ($entity->microarticle_id == 0) {
+    if (isset($entity->microarticle_id) && $entity->microarticle_id == 0) {
       $entity->microarticle_id = null;
     }
     return parent::save($entity);

@@ -6,20 +6,15 @@ define('BELLCOM_BORGERDK_CONTROLLER_UI_PAGER_LIMIT', 25); //used when presenting
 
 module_load_include('inc', 'bellcom_borgerdk', 'includes/bellcom_borgerdk.fields');
 module_load_include('inc', 'bellcom_borgerdk', 'includes/bellcom_borgerdk.synch');
-module_load_include('inc', 'bellcom_borgerdk', 'includes/bellcom_borgerdk.admin');
+module_load_include('inc', 'bellcom_borgerdk', 'admin/bellcom_borgerdk.article.admin');
+module_load_include('inc', 'bellcom_borgerdk', 'admin/bellcom_borgerdk.microarticle.admin');
+module_load_include('inc', 'bellcom_borgerdk', 'admin/bellcom_borgerdk.selfservice.admin');
 
 /**
  * Implements hook_menu()
  */
 function bellcom_borgerdk_menu() {
   $items = array();
-
-//  $items['borgerdk/synch'] = array(
-//    'title' => 'Borger.dk - Synchronize all articles',
-//    'page callback' => 'bellcom_borgerdk_synchronize',
-//    'access arguments' => array('access content'),
-//    'file' => 'includes/bellcom_borgerdk.synch.inc'
-//  );
 
   $items['borgerdk/synch'] = array(
     'title' => 'Borger.dk - test',
@@ -45,16 +40,6 @@ function bellcom_borgerdk_menu() {
     'type' => MENU_DEFAULT_LOCAL_TASK,
     'weight' => -10,
   );
-//  $items[$article_uri . '/edit'] = array(
-//    'title' => 'Edit',
-//    'page callback' => 'drupal_get_form',
-//    'page arguments' => array('example_task_form', $article_uri_argument_position),
-//    'access callback' => 'entity_access',
-//    'access arguments' => array('edit', 'example_task', $task_uri_argument_position),
-//    'file' => 'example_task.admin.inc',
-//    'type' => MENU_LOCAL_TASK,
-//    'context' => MENU_CONTEXT_PAGE | MENU_CONTEXT_INLINE,
-//  );
   $items[$article_uri . '/delete'] = array(
     'title' => 'Delete Borger.dk Article',
     'page callback' => 'drupal_get_form',
