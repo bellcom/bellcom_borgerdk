@@ -26,7 +26,7 @@ class BorgerdkArticleUIController extends EntityDefaultUIController {
       'articleUrl' => array('data' => t('Article URL')),
       'publishingDate' => array('data' => t('Publishing Date'), 'type' => 'property', 'specifier' => 'publishingDate'),
       'lastUpdated' => array('data' => t('Last Updated'), 'type' => 'property', 'specifier' => 'lastUpdated'),
-      //'operations' => array('data' => t('Operations')),
+      'delete' => array('data' => t('Delete'))
     );
 
     $query = new EntityFieldQuery();
@@ -47,14 +47,15 @@ class BorgerdkArticleUIController extends EntityDefaultUIController {
 
     $options = array();
     foreach ($borgerdk_article_array as $entity_id => $article) {
+      $entity_path = entity_uri('borgerdk_article', $article)['path'];
+
       $options[$entity_id] = array(
-        'title' => l($article->title, entity_uri('borgerdk_article', $article)['path']),
+        'title' => l($article->title, $entity_path),
         'articleUrl' => l($article->articleUrl, $article->articleUrl, array('attributes' => array('target' => '_blank'))),
         'publishingDate' => format_date($article->publishingDate),
         'lastUpdated' => format_date($article->lastUpdated),
-        //'operations' => array(),
-        //l(t('Edit'), ADMIN_CONTENT_LAWMAKERS_MANAGE_URI . $lawmakers_id, array('query' => array('destination' => ADMIN_CONTENT_LAWMAKERS_URI)))// . ' ' .
-        //l(t('Delete'), ADMIN_CONTENT_LAWMAKERS_MANAGE_URI . $lawmakers_id . '/delete', array('attributes' => array('class' => array('lawmakers-delete-' . $lawmakers->lawmakers_id), ), 'query' => array('destination' => ADMIN_CONTENT_LAWMAKERS_URI))),
+        'delete' =>
+          l(t('Delete'), "$entity_path/delete", array('query' => array('destination' => entity_get_info('borgerdk_article')['admin ui']['path']))),
       );
     }
 

@@ -3,6 +3,7 @@ description = Integration of Borger.dk portal
 package = Bellcom
 core = 7.x
 dependencies[] = entity
+files[] = controllers/BorgerdkAbstractEntityController.php
 files[] = entities/BorgerdkArticleEntity.php
 files[] = controllers/BorgerdkArticleController.php
 files[] = controllers/BorgerdkArticleUIController.php

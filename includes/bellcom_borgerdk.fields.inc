@@ -79,7 +79,12 @@ function bellcom_borgerdk_field_widget_form(&$form, &$form_state, $field, $insta
       );
       $element['borgerdk_article_field']['borgerdk_microarticle_entity_ids'] = array(
         '#type' => 'tableselect',
-        '#header' => array('title' => t('Microarticle title'), 'content' => t('Content sample'), 'selfservices' => ('Self-services #')),
+        '#header' => array(
+          'title' => t('Microarticle title'),
+          'content' => t('Content sample'),
+          'selfservices' => ('Self-services #'),
+          'author' => t('Author')
+        ),
         '#options' => bellcom_borgerdk_field_get_microarticle_options($form_state),
         '#empty' => t('No content available.'),
         '#validated' => 'TRUE'
@@ -91,7 +96,7 @@ function bellcom_borgerdk_field_widget_form(&$form, &$form_state, $field, $insta
       );
       $element['borgerdk_article_field']['borgerdk_selfservice_entity_ids'] = array(
         '#type' => 'tableselect',
-        '#header' => array('title' => t('Self-service title'), 'url' => t('Self-service URL')),
+        '#header' => array('title' => t('Self-service title'), 'url' => t('Self-service URL'), 'author' => t('Author')),
         '#options' => bellcom_borgerdk_field_get_selfservice_options($form_state),
         '#empty' => t('No content available.'),
         '#validated' => 'TRUE'
@@ -112,14 +117,14 @@ function bellcom_borgerdk_field_widget_form(&$form, &$form_state, $field, $insta
 
       if (isset($items[$delta]['borgerdk_microarticle_entity_ids'])) {
         $selected_microarticles = json_decode($items[$delta]['borgerdk_microarticle_entity_ids']);
-        foreach($selected_microarticles as $selected_ma) {
+        foreach ($selected_microarticles as $selected_ma) {
           $element['borgerdk_article_field']['borgerdk_microarticle_entity_ids']['#default_value'][$selected_ma] = 1;
         }
       }
 
       if (isset($items[$delta]['borgerdk_selfservice_entity_ids'])) {
         $selected_selfservice = json_decode($items[$delta]['borgerdk_selfservice_entity_ids']);
-        foreach($selected_selfservice as $selected_ss) {
+        foreach ($selected_selfservice as $selected_ss) {
           $element['borgerdk_article_field']['borgerdk_selfservice_entity_ids']['#default_value'][$selected_ss] = 1;
         }
       }
@@ -139,15 +144,20 @@ function bellcom_borgerdk_field_widget_form(&$form, &$form_state, $field, $insta
  * @return array of ajax commands
  */
 function bellcom_borgerdk_reload_article_info(&$form, &$form_state) {
+  dpm(time());
   $field_name = $form_state['triggering_element']['#parents'][0];
   $delta = $form_state['triggering_element']['#ajax']['delta'];
 
   $selected_article_entity_id = $form_state['triggering_element']['#value'];
   $selected_article_title = $form_state['triggering_element']['#options'][$selected_article_entity_id];
 
+  dpm($selected_article_entity_id);
+
   //getting wrapper fieldset
   $wrapper = $form[$field_name]['und'][$delta]['borgerdk_article_field'];
   $wrapper['#title'] = t('Borger.dk article: @title', array('@title' => $selected_article_title));
+
+  //drupal_set_message('<pre>' . print_r($wrapper,1) . '</pre>');
 
   $form_state['rebuild'] = TRUE;
   return array(
@@ -244,7 +254,8 @@ function bellcom_borgerdk_field_formatter_view($entity_type, $entity, $field, $i
                 unset($element[$delta]['borgerdk_article'][$article->entity_id]['microarticles'][$id]);
               }
             }
-          } else {
+          }
+          else {
             //empty, removing field
             unset($element[$delta]['borgerdk_article'][$article->entity_id]['microarticles']);
           }
@@ -258,7 +269,8 @@ function bellcom_borgerdk_field_formatter_view($entity_type, $entity, $field, $i
                 unset($element[$delta]['borgerdk_article'][$article->entity_id]['selfservices'][$id]);
               }
             }
-          } else {
+          }
+          else {
             //empty, removing field
             unset($element[$delta]['borgerdk_article'][$article->entity_id]['selfservices']);
           }
@@ -281,8 +293,8 @@ function bellcom_borgerdk_field_formatter_view($entity_type, $entity, $field, $i
  * @return mixed - array of Borger.dk articles
  */
 function bellcom_borgerdk_field_get_articles_options() {
-  $entities = borgerdk_article_load_multiple(false, array(), true);
-  uasort($entities, function($a, $b) {
+  $entities = borgerdk_article_load_multiple(FALSE, array(), TRUE);
+  uasort($entities, function ($a, $b) {
     return strcmp($a->title, $b->title);
   });
 
@@ -303,7 +315,7 @@ function bellcom_borgerdk_field_get_articles_options() {
  * @param null $article_entity_id - default value, used if form_state['triggering_element'] is empty
  * @return array - formatted array of select options
  */
-function bellcom_borgerdk_field_get_microarticle_options($form_state, $article_entity_id = false) {
+function bellcom_borgerdk_field_get_microarticle_options($form_state, $article_entity_id = FALSE) {
   $options = array();
 
   //checking that trigger element is borgerdk_article_entity_id
@@ -313,17 +325,19 @@ function bellcom_borgerdk_field_get_microarticle_options($form_state, $article_e
 
   if ($article_entity_id) {
     //load microarticles
-    $entities = borgerdk_microarticle_load_multiple(false, array('article_id' => $article_entity_id), true);
+    $entities = borgerdk_microarticle_load_multiple(FALSE, array('article_id' => $article_entity_id), TRUE);
 
     foreach ($entities as $entity) {
       $strip_content = strip_tags($entity->content);
-      $strip_content = substr($strip_content, 0,100) . ((strlen($strip_content) > 100)? '...' : '');
-      $selfservices_count = count(borgerdk_selfservice_load_multiple(false, array('microarticle_id' => $entity->entity_id)));
+      $strip_content = mb_substr($strip_content, 0, 100) . ((mb_strlen($strip_content) > 100) ? '...' : '');
+      $selfservices_count = count(borgerdk_selfservice_load_multiple(FALSE, array('microarticle_id' => $entity->entity_id)));
+      $author = user_load($entity->uid);
 
       $options[$entity->entity_id] = array(
         'title' => $entity->title,
         'content' => $strip_content,
-        'selfservices' => $selfservices_count
+        'selfservices' => $selfservices_count,
+        'author' => ($author->uid) ? l($author->name, entity_uri('user', $author)['path']) : 'Borger.dk',
       );
     }
   }
@@ -341,7 +355,7 @@ function bellcom_borgerdk_field_get_microarticle_options($form_state, $article_e
  * @param null $article_entity_id - default value, used if form_state['triggering_element'] is empty
  * @return array - formatted array of select options
  */
-function bellcom_borgerdk_field_get_selfservice_options($form_state, $article_entity_id = false) {
+function bellcom_borgerdk_field_get_selfservice_options($form_state, $article_entity_id = FALSE) {
   $options = array();
 
   //checking that trigger element is borgerdk_article_entity_id
@@ -351,12 +365,18 @@ function bellcom_borgerdk_field_get_selfservice_options($form_state, $article_en
 
   if ($article_entity_id) {
     //load self-services
-    $entities = borgerdk_selfservice_load_multiple(false, array('article_id' => $article_entity_id, 'microarticle_id' => null), true);
+    $entities = borgerdk_selfservice_load_multiple(FALSE, array(
+      'article_id' => $article_entity_id,
+      'microarticle_id' => NULL
+    ), TRUE);
 
     foreach ($entities as $entity) {
+      $author = user_load($entity->uid);
+
       $options[$entity->entity_id] = array(
         'title' => $entity->title,
-        'url' => $entity->url
+        'url' => $entity->url,
+        'author' => ($author->uid) ? l($author->name, entity_uri('user', $author)['path']) : 'Borger.dk',
       );
     }
   }

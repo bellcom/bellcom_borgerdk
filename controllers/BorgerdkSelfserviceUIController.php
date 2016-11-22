@@ -25,7 +25,9 @@ class BorgerdkSelfserviceUIController extends EntityDefaultUIController {
       'url' => array('data' => t('URL')),
       'articleId' => array('data' => t('Article ID'), 'type' => 'property', 'specifier' => 'article_id'),
       'microarticleId' => array('data' => t('Microarticle ID'), 'type' => 'property', 'specifier' => 'microarticle_id'),
-      //'operations' => array('data' => t('Operations')),
+      'author' => array('data' => t('Author'), 'type' => 'property', 'specifier' => 'uid'),
+      'edit' => array('data' => t('Edit')),
+      'delete' => array('data' => t('Delete')),
     );
 
     $options = array();
@@ -55,16 +57,20 @@ class BorgerdkSelfserviceUIController extends EntityDefaultUIController {
       if ($ss->microarticle_id) {
         $microarticle = borgerdk_microarticle_load($ss->microarticle_id);
       }
+      $author = user_load($ss->uid);
+
+      $entity_path = entity_uri('borgerdk_selfservice', $ss)['path'];
 
       $options[$entity_id] = array(
-        'title' => l($ss->title, entity_uri('borgerdk_selfservice', $ss)['path']),
-        'url' => l(substr($ss->url, 0, 50) . '...' , $ss->url, array('attributes' => array('target'=>'_blank'))),
+        'title' => l($ss->title, $entity_path),
+        'url' => l(mb_substr($ss->url, 0, 50) . '...' , $ss->url, array('attributes' => array('target'=>'_blank'))),
         'articleId' => l($article->entity_id, entity_uri('borgerdk_article', $article)['path']),
         'microarticleId' => ($microarticle)? l($microarticle->entity_id, entity_uri('borgerdk_microarticle', $microarticle)['path']) : '',
-        //'operations' => array()
-        //TODO
-        //l(t('Edit'), ADMIN_CONTENT_LAWMAKERS_MANAGE_URI . $lawmakers_id, array('query' => array('destination' => ADMIN_CONTENT_LAWMAKERS_URI))) . ' ' .
-        //l(t('Delete'), ADMIN_CONTENT_LAWMAKERS_MANAGE_URI . $lawmakers_id . '/delete', array('attributes' => array('class' => array('lawmakers-delete-' . $lawmakers->lawmakers_id), ), 'query' => array('destination' => ADMIN_CONTENT_LAWMAKERS_URI))),
+        'author' => ($author->uid) ? l($author->name, entity_uri('user', $author)['path']) : 'Borger.dk',
+        'edit' =>
+          l(t('Edit'), "$entity_path/edit", array('query' => array('destination' => entity_get_info('borgerdk_selfservice')['admin ui']['path']))),
+        'delete' =>
+          l(t('Delete'), "$entity_path/delete", array('query' => array('destination' => entity_get_info('borgerdk_selfservice')['admin ui']['path']))),
       );
     }
 

@@ -1,10 +1,12 @@
 <?php
-define('BELLCOM_BORGERDK_QUEUE', 'bellcom_borgerdk_cron_queue');
 
 /**
  * Implements hook_uninstall().
  */
 function bellcom_borgerdk_uninstall() {
+  //getting the variables
+  module_load_include('module', 'bellcom_borgerdk', 'bellcom_borgerdk');
+
   drupal_uninstall_schema('bellcom_borgerdk');
 
   $queue = DrupalQueue::get(BELLCOM_BORGERDK_QUEUE);
@@ -121,6 +123,24 @@ function bellcom_borgerdk_schema() {
         'description' => 'Foreign key to borgerdk_article entity_id',
         'type' => 'int',
       ),
+      'uid' => array(
+        'description' => 'Author uid of this microarticle, 0 if imported automatically',
+        'type' => 'int',
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+      'changed' => array(
+        'description' => 'The Unix timestamp of the entity changed time.',
+        'type' => 'int',
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+      'created' => array(
+        'description' => 'The Unix timestamp of the entity created time.',
+        'type' => 'int',
+        'not null' => TRUE,
+        'default' => 0,
+      ),
     ),
     'primary key' => array('entity_id'),
   );
@@ -163,6 +183,24 @@ function bellcom_borgerdk_schema() {
         'description' => 'Foreign key to borgerdk_microarticle entity_id',
         'type' => 'varchar',
         'length' => 50,
+      ),
+      'uid' => array(
+        'description' => 'Author uid of this self-service, 0 if imported automatically',
+        'type' => 'int',
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+      'changed' => array(
+        'description' => 'The Unix timestamp of the entity changed time.',
+        'type' => 'int',
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+      'created' => array(
+        'description' => 'The Unix timestamp of the entity created time.',
+        'type' => 'int',
+        'not null' => TRUE,
+        'default' => 0,
       ),
     ),
     'primary key' => array('entity_id'),

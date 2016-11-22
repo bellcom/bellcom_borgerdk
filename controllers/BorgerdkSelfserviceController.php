@@ -3,19 +3,18 @@
 /**
  * BorgerdkSelfservice class.
  */
-class BorgerdkSelfserviceController extends EntityAPIController {
-
-  public function create(array $values = array()) {
-    $values += array(
-      'title' => '',
-      'created' => REQUEST_TIME,
-      'changed' => REQUEST_TIME,
-    );
-    return parent::create($values);
-  }
+class BorgerdkSelfserviceController extends BorgerdkAbstractEntityController {
 
   public function save($entity) {
-    $entity->changed = REQUEST_TIME;
+    if (isset($entity->is_new) && $entity->is_new) {
+      global $user;
+      $entity->uid = $user->uid;
+
+      $entity->entity_id = parent::generateEntityId($entity);
+    }
+    if ($entity->microarticle_id == 0) {
+      $entity->microarticle_id = null;
+    }
     return parent::save($entity);
   }
 
@@ -54,7 +53,7 @@ class BorgerdkSelfserviceController extends EntityAPIController {
     $content['label'] = array(
         '#theme' => 'field',
         '#weight' => $weight++,
-        '#title' =>t('label'),
+        '#title' =>t('Label'),
         '#field_name' => 'label',
         '#field_type' => 'text',
         '#items' => array(array('value' => $entity->label)),
@@ -103,9 +102,22 @@ class BorgerdkSelfserviceController extends EntityAPIController {
             ) + $default;
         }
       }
+
+      if ($entity->uid) {
+        $author = user_load($entity->uid);
+        $content['author'] = array(
+            '#theme' => 'field',
+            '#weight' => $weight++,
+            '#title' => t('Author'),
+            '#field_name' => 'author',
+            '#field_type' => 'text',
+            '#items' => array(array('value' => $author->name)),
+            '#formatter' => 'text_default',
+            0 => array('#markup' => l($author->name, entity_uri('user', $author)['path']))
+          ) + $default;
+      }
     }
 
     return parent::buildContent($entity, $view_mode, $langcode, $content);
-
   }
 }

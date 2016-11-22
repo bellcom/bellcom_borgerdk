@@ -3,21 +3,13 @@
 /**
  * BorgerdkArticle class.
  */
-class BorgerdkArticleController extends EntityAPIController {
+class BorgerdkArticleController extends BorgerdkAbstractEntityController {
 
   public function create(array $values = array()) {
     $values += array(
-      'title' => '',
-      'created' => REQUEST_TIME,
-      'changed' => REQUEST_TIME,
       'resynch' => TRUE,
     );
     return parent::create($values);
-  }
-
-  public function save($entity) {
-    $entity->changed = REQUEST_TIME;
-    return parent::save($entity);
   }
 
   public function buildContent($entity, $view_mode = 'full', $langcode = NULL, $content = array()) {
@@ -33,7 +25,7 @@ class BorgerdkArticleController extends EntityAPIController {
     $content['entity_id'] = array(
         '#theme' => 'field',
         '#weight' => $weight++,
-        '#title' =>t('Entity ID'),
+        '#title' => t('Entity ID'),
         '#field_name' => 'entity_id',
         '#field_type' => 'text',
         '#items' => array(array('value' => $entity->entity_id)),
@@ -44,18 +36,18 @@ class BorgerdkArticleController extends EntityAPIController {
     $content['title'] = array(
         '#theme' => 'field',
         '#weight' => $weight++,
-        '#title' =>t('Title'),
+        '#title' => t('Title'),
         '#field_name' => 'title',
         '#field_type' => 'text',
         '#items' => array(array('value' => $entity->title)),
         '#formatter' => 'text_default',
         0 => array('#markup' => check_plain($entity->title))
-      )  + $default;
+      ) + $default;
 
     $content['header'] = array(
         '#theme' => 'field',
         '#weight' => $weight++,
-        '#title' =>t('Header'),
+        '#title' => t('Header'),
         '#field_name' => 'header',
         '#field_type' => 'text',
         '#items' => array(array('value' => $entity->header)),
@@ -66,18 +58,18 @@ class BorgerdkArticleController extends EntityAPIController {
     $content['articleUrl'] = array(
         '#theme' => 'field',
         '#weight' => $weight++,
-        '#title' =>t('Article URL'),
+        '#title' => t('Article URL'),
         '#field_name' => 'articleUrl',
         '#field_type' => 'text',
         '#items' => array(array('value' => $entity->articleUrl)),
         '#formatter' => 'text_default',
-        0 => array('#markup' =>  l($entity->articleUrl, $entity->articleUrl, array('attributes' => array('target'=>'_blank'))))
+        0 => array('#markup' => l($entity->articleUrl, $entity->articleUrl, array('attributes' => array('target' => '_blank'))))
       ) + $default;
 
     $content['legislation'] = array(
         '#theme' => 'field',
         '#weight' => $weight++,
-        '#title' =>t('Legislation'),
+        '#title' => t('Legislation'),
         '#field_name' => 'legislation',
         '#field_type' => 'text',
         '#items' => array(array('value' => $entity->legislation)),
@@ -88,7 +80,7 @@ class BorgerdkArticleController extends EntityAPIController {
     $content['recommendation'] = array(
         '#theme' => 'field',
         '#weight' => $weight++,
-        '#title' =>t('Recommendation'),
+        '#title' => t('Recommendation'),
         '#field_name' => 'recommendation',
         '#field_type' => 'text',
         '#items' => array(array('value' => $entity->recommendation)),
@@ -99,7 +91,7 @@ class BorgerdkArticleController extends EntityAPIController {
     $content['byline'] = array(
         '#theme' => 'field',
         '#weight' => $weight++,
-        '#title' =>t('Byline'),
+        '#title' => t('Byline'),
         '#field_name' => 'byline',
         '#field_type' => 'text',
         '#items' => array(array('value' => $entity->byline)),
@@ -107,7 +99,7 @@ class BorgerdkArticleController extends EntityAPIController {
         0 => array('#markup' => check_plain($entity->byline))
       ) + $default;
 
-    $microarticle_entities = borgerdk_microarticle_load_multiple(false, array('article_id' => $entity->entity_id));
+    $microarticle_entities = borgerdk_microarticle_load_multiple(FALSE, array('article_id' => $entity->entity_id));
     if (!empty($microarticle_entities)) {
       if ($view_mode == 'full') {
         $content['microarticles'] = array(
@@ -118,32 +110,38 @@ class BorgerdkArticleController extends EntityAPIController {
             '#field_type' => 'entityreference',
             '#formatter' => 'entityreference_entity_view',
           ) + $default;
-        foreach($microarticle_entities as $id => $ma) {
+        foreach ($microarticle_entities as $id => $ma) {
           $content['microarticles']['#items'][$id] = array('target_id' => $id, $ma);
           $content['microarticles'][$id] = entity_view('borgerdk_microarticle', array(entity_id('borgerdk_microarticle', $ma) => $ma), 'teaser');
         }
 
-      } else if ($view_mode == 'basic_info') {
-        $microarticles_links = array();
-        foreach($microarticle_entities as $ma) {
-          $microarticles_links[$ma->entity_id] = array(
-            'title' => $ma->title,
-            'href' => entity_uri('borgerdk_microarticle', $ma)['path'],
-          );
-        }
+      }
+      else {
+        if ($view_mode == 'basic_info') {
+          $microarticles_links = array();
+          foreach ($microarticle_entities as $ma) {
+            $microarticles_links[$ma->entity_id] = array(
+              'title' => $ma->title,
+              'href' => entity_uri('borgerdk_microarticle', $ma)['path'],
+            );
+          }
 
-        $content['microarticles'] = array(
-            '#theme' => 'links',
-            '#weight' => $weight++,
-            '#heading' => array('text' => 'Microarticles', 'level' => 'h2'),
-            '#field_name' => 'microarticles',
-            '#field_type' => 'links',
-            '#links' => $microarticles_links,
-          ) + $default;
+          $content['microarticles'] = array(
+              '#theme' => 'links',
+              '#weight' => $weight++,
+              '#heading' => array('text' => 'Microarticles', 'level' => 'h2'),
+              '#field_name' => 'microarticles',
+              '#field_type' => 'links',
+              '#links' => $microarticles_links,
+            ) + $default;
+        }
       }
     }
 
-    $selfservice_link_entities = borgerdk_selfservice_load_multiple(false, array('article_id' => $entity->entity_id, 'microarticle_id' => null));
+    $selfservice_link_entities = borgerdk_selfservice_load_multiple(FALSE, array(
+      'article_id' => $entity->entity_id,
+      'microarticle_id' => NULL
+    ));
     if (!(empty($selfservice_link_entities))) {
       if ($view_mode == 'full') {
         $content['selfservices'] = array(
@@ -154,28 +152,31 @@ class BorgerdkArticleController extends EntityAPIController {
             '#field_type' => 'entityreference',
             '#formatter' => 'entityreference_entity_view',
           ) + $default;
-        foreach($selfservice_link_entities as $id => $ss) {
+        foreach ($selfservice_link_entities as $id => $ss) {
           $content['selfservices']['#items'][$id] = array('target_id' => $id, $ss);
           $content['selfservices'][$id] = entity_view('borgerdk_selfservice', array(entity_id('borgerdk_selfservice', $ss) => $ss), 'teaser');
         }
-      } else if ($view_mode == 'basic_info'){
-        $selfservice_links = array();
-        foreach($selfservice_link_entities as $ss) {
-          $selfservice_links[$ss->entity_id] = array(
-            'title' => $ss->title,
-            'href' => entity_uri('borgerdk_selfservice', $ss)['path'],
-          );
-        }
+      }
+      else {
+        if ($view_mode == 'basic_info') {
+          $selfservice_links = array();
+          foreach ($selfservice_link_entities as $ss) {
+            $selfservice_links[$ss->entity_id] = array(
+              'title' => $ss->title,
+              'href' => entity_uri('borgerdk_selfservice', $ss)['path'],
+            );
+          }
 
-        if (!empty($selfservice_links)) {
-          $content['selfservices'] = array(
-              '#theme' => 'links',
-              '#weight' => $weight++,
-              '#heading' => array('text' => 'Selfservices', 'level' => 'h2'),
-              '#field_name' => 'selfservices',
-              '#field_type' => 'links',
-              '#links' => $selfservice_links,
-            ) + $default;
+          if (!empty($selfservice_links)) {
+            $content['selfservices'] = array(
+                '#theme' => 'links',
+                '#weight' => $weight++,
+                '#heading' => array('text' => 'Selfservices', 'level' => 'h2'),
+                '#field_name' => 'selfservices',
+                '#field_type' => 'links',
+                '#links' => $selfservice_links,
+              ) + $default;
+          }
         }
       }
     }
@@ -183,7 +184,7 @@ class BorgerdkArticleController extends EntityAPIController {
     $content['publishingDate'] = array(
         '#theme' => 'field',
         '#weight' => $weight++,
-        '#title' =>t('Publishing Date (Borger.dk)'),
+        '#title' => t('Publishing Date (Borger.dk)'),
         '#field_name' => 'publishingDate',
         '#field_type' => 'text',
         '#items' => array(array('value' => $entity->publishingDate)),
@@ -194,7 +195,7 @@ class BorgerdkArticleController extends EntityAPIController {
     $content['lastUpdated'] = array(
         '#theme' => 'field',
         '#weight' => $weight++,
-        '#title' =>t('Last Updated (Borger.dk)'),
+        '#title' => t('Last Updated (Borger.dk)'),
         '#field_name' => 'lastUpdated',
         '#field_type' => 'text',
         '#items' => array(array('value' => $entity->lastUpdated)),
@@ -203,5 +204,19 @@ class BorgerdkArticleController extends EntityAPIController {
       ) + $default;
 
     return parent::buildContent($entity, $view_mode, $langcode, $content);
+  }
+
+  public function delete($ids, DatabaseTransaction $transaction = NULL) {
+    foreach($ids as $id) {
+      //deleting self-services
+      $selfservices = borgerdk_selfservice_load_multiple(false, array('article_id' => $id), true);
+      borgerdk_selfservice_delete_multiple(array_keys($selfservices));
+
+      //deleting microarticles
+      $microarticles = borgerdk_microarticle_load_multiple(false, array('article_id' => $id), true);
+      borgerdk_microarticle_delete_multiple(array_keys($microarticles));
+    }
+
+    parent::delete($ids, $transaction);
   }
 }
