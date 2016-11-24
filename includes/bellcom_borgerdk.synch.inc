@@ -27,7 +27,10 @@ function bellcom_borgerdk_fetch_articles() {
   $exisiting_articles = borgerdk_article_load_multiple(array_keys($articles));
 
   foreach ($articles as $id => $article) {
-    $entity_article = $exisiting_articles[$id];
+    $entity_article = null;
+    if (array_key_exists($id, $exisiting_articles)) {
+      $entity_article = $exisiting_articles[$id];
+    }
 
     //article info is missing in the database
     if (!$entity_article) {

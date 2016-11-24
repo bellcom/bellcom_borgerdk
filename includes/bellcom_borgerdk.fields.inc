@@ -298,6 +298,7 @@ function bellcom_borgerdk_field_get_articles_options() {
     return strcmp($a->title, $b->title);
   });
 
+  $options = array();
   foreach ($entities as $entity) {
     $options[$entity->entity_id] = decode_entities($entity->title) . ' (' . $entity->entity_id . ')';
   }

@@ -5,8 +5,8 @@
  */
 class BorgerdkSelfserviceController extends BorgerdkAbstractEntityController {
 
-  public function save($entity) {
-    if (isset($entity->is_new) && $entity->is_new) {
+  public function save($entity, DatabaseTransaction $transaction = NULL) {
+    if (isset($entity->is_new) && $entity->is_new && !isset($entity->entity_id)) {
       global $user;
       $entity->uid = $user->uid;
 
@@ -15,7 +15,7 @@ class BorgerdkSelfserviceController extends BorgerdkAbstractEntityController {
     if (isset($entity->microarticle_id) && $entity->microarticle_id == 0) {
       $entity->microarticle_id = null;
     }
-    return parent::save($entity);
+    return parent::save($entity, $transaction);
   }
 
   public function buildContent($entity, $view_mode = 'full', $langcode = NULL, $content = array()) {

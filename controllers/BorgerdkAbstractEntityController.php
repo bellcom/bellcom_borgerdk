@@ -11,9 +11,14 @@ abstract class BorgerdkAbstractEntityController extends EntityAPIController {
     return parent::create($values);
   }
 
-  public function save($entity) {
-    $entity->changed = REQUEST_TIME;
-    return parent::save($entity);
+  public function save($entity, DatabaseTransaction $transaction = NULL) {
+    //update the changed time only if we don't have versioning
+    //or if the operation is in fact creating the new revision.
+    //this helps to avoid situation where changed time is changed during revision revert
+    if (!isset($entity->is_new_revision) || (isset($entity->is_new_revision) && $entity->is_new_revision)) {
+      $entity->changed = REQUEST_TIME;
+    }
+    return parent::save($entity, $transaction);
   }
 
   /**

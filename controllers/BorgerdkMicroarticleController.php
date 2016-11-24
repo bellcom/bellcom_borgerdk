@@ -1,17 +1,21 @@
 <?php
+
 /**
  * BorgerdkMicroarticle class.
  */
 class BorgerdkMicroarticleController extends BorgerdkAbstractEntityController {
 
-  public function save($entity) {
-    if (isset($entity->is_new) && $entity->is_new) {
-      global $user;
-      $entity->uid = $user->uid;
-
+  public function save($entity, DatabaseTransaction $transaction = NULL) {
+    if (isset($entity->is_new) && $entity->is_new && !isset($entity->entity_id)) {
       $entity->entity_id = parent::generateEntityId($entity);
     }
-    return parent::save($entity);
+    global $user;
+    $entity->uid = $user->uid;
+    //default setting = creating a new revisiton is not mentioned otherwise
+    if (!isset($entity->is_new_revision)) {
+      $entity->is_new_revision = TRUE;
+    }
+    return parent::save($entity, $transaction);
   }
 
   public function buildContent($entity, $view_mode = 'full', $langcode = NULL, $content = array()) {
@@ -132,10 +136,10 @@ class BorgerdkMicroarticleController extends BorgerdkAbstractEntityController {
 
   public function delete($ids, DatabaseTransaction $transaction = NULL) {
     //orphaning self-services
-    foreach($ids as $id) {
-      $selfservices = borgerdk_selfservice_load_multiple(false, array('microarticle_id' => $id), true);
+    foreach ($ids as $id) {
+      $selfservices = borgerdk_selfservice_load_multiple(FALSE, array('microarticle_id' => $id), TRUE);
       foreach ($selfservices as $ss) {
-        $ss->microarticle_id = null;
+        $ss->microarticle_id = NULL;
         borgerdk_selfservice_save($ss);
       }
     }
