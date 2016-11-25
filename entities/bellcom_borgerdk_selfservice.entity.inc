@@ -5,7 +5,7 @@
  *
  * @return array
  */
-function bellcom_bogerdk_selfservice_menu() {
+function bellcom_borgerdk_selfservice_menu() {
   $items = array();
 
   $selfservice_uri = 'borgerdk/selfservice/%borgerdk_selfservice';

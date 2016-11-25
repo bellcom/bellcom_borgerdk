@@ -50,7 +50,7 @@ class BorgerdkArticleUIController extends EntityDefaultUIController {
       $entity_path = entity_uri('borgerdk_article', $article)['path'];
 
       $options[$entity_id] = array(
-        'title' => l($article->title, $entity_path),
+        'title' => ($article->resynch)? '<i>' . l($article->title, $entity_path) . '</i> *' : l($article->title, $entity_path),
         'articleUrl' => l($article->articleUrl, $article->articleUrl, array('attributes' => array('target' => '_blank'))),
         'publishingDate' => format_date($article->publishingDate),
         'lastUpdated' => format_date($article->lastUpdated),
@@ -83,6 +83,10 @@ class BorgerdkArticleUIController extends EntityDefaultUIController {
       '#options' => $options,
       '#attributes' => array('class' => array('entity-sort-table')),
       '#empty' => t('No content.'),
+    );
+
+    $form[] = array(
+      '#markup' => t('* Indicates the article is schedule to be resynched with Borger.dk service')
     );
 
     $form['pager'] = array('#theme' => 'pager');

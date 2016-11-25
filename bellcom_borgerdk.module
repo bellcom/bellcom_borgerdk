@@ -22,6 +22,27 @@ function bellcom_borgerdk_menu() {
   $items += bellcom_borgerdk_microarticle_menu();
   $items += bellcom_borgerdk_selfservice_menu();
 
+  $items['admin/config/bellcom_borgerdk'] = array(
+    'title' => 'Borger.dk Settings',
+    'position' => 'right',
+    'weight' => -15,
+    'access arguments' => array('administer borgerdk_article'),
+    'page callback' => 'system_admin_menu_block_page',
+    'file' => 'system.admin.inc',
+    'file path' => drupal_get_path('module', 'system'),
+    'type' => MENU_NORMAL_ITEM,
+  );
+
+  $items['admin/config/bellcom_borgerdk/settings'] = array(
+    'title' => 'Borger.dk Settings',
+    'description' => 'Settings for the Bellcom Borger.dk integration',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('bellcom_borgerdk_settings_form'),
+    'access arguments' => array('administer borgerdk_article'),
+    'type' => MENU_NORMAL_ITEM,
+    'file' => 'admin/bellcom_borgerdk.admin.inc',
+  );
+
   return $items;
 }
 

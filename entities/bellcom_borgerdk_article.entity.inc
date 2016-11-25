@@ -71,7 +71,6 @@ function bellcom_borgedk_article_entity_info() {
   );
 }
 
-/** borgerdk_article entity functions start */
 function borgerdk_article_load($entity_id = NULL, $reset = FALSE) {
   $articles = borgerdk_article_load_multiple(array($entity_id), array(), $reset);
   return reset($articles);
@@ -104,5 +103,3 @@ function borgerdk_article_access($op, $entity, $account = NULL, $entity_type) {
     }
   }
 }
-/** borgerdk_article entity functions end */
- 

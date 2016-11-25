@@ -124,7 +124,6 @@ function bellcom_borgedk_microarticle_entity_info() {
   );
 }
 
-/** borgerdk_microarticle entity functions start */
 function borgerdk_microarticle_load($entity_id = NULL, $vid = NULL, $reset = FALSE) {
   $conditions = (isset($vid) ? array('vid' => $vid) : array());
   $entities = borgerdk_microarticle_load_multiple(array($entity_id), $conditions, $reset);
@@ -161,5 +160,3 @@ function borgerdk_microarticle_access($op, $entity, $account = NULL, $entity_typ
     return borgerdk_article_access($op, $article, $account, 'borgerdk_article');
   }
 }
-
-/** borgerdk_microarticle entity functions end */

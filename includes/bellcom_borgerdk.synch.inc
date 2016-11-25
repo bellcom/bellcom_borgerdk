@@ -3,6 +3,7 @@
 use BorgerDk\ArticleService\Client as BorgerDkClient;
 use BorgerDk\ArticleService\Resources\Endpoints\GetAllArticles;
 use BorgerDk\ArticleService\Resources\Endpoints\GetArticlesByIDs;
+use BorgerDk\ArticleService\Resources\Endpoints\GetMunicipalityList;
 
 module_load_include('inc', 'bellcom_borgerdk', 'includes/bellcom_borgerdk.mapper');
 
@@ -61,6 +62,10 @@ function bellcom_borgedk_get_resynch_articles() {
 function bellcom_borgerdk_queue_worker($items) {
   $client = new BorgerDkClient();
   $params = array('articleIDs' => array_keys($items));
+  if (variable_get('bellcom_borgerdk_selected_municipality')) {
+    $params['municipalityCode'] = variable_get('bellcom_borgerdk_selected_municipality');
+  }
+
   $articles_resource = new GetArticlesByIDs($client, $params);
   $result_raw = $articles_resource->getResultRaw();
 
@@ -142,4 +147,25 @@ function bellcom_borgerdk_queue_worker($items) {
     //variable_set('borger_articles_cron_last_execute', time());
     watchdog('Bellcom Borger.dk', 'Article processing finished.');
   }
+}
+
+/**
+ * Returns the list of available municipalities from Borger.dk webservice.
+ * Stored in cache for 6 hours.
+ *
+ * @return array|GetMunicipalityList
+ */
+function bellcom_borgedk_get_municipalities_list() {
+  if ($cache = cache_get('bellcom_borgedk_get_municipalities_list')) {
+    $municipalities = $cache->data;
+  }
+  else {
+    $client = new BorgerDkClient();
+    $municipalities = new GetMunicipalityList($client);
+    $municipalities = $municipalities->getResultFormatted();
+
+    cache_set('bellcom_borgedk_get_municipalities_list', $municipalities, 'cache', strtotime('+6 hour', time()));
+  }
+
+  return $municipalities;
 }

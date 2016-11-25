@@ -23,4 +23,13 @@ class BorgerdkArticleEntity extends Entity {
   protected function defaultUri() {
     return array('path' => 'borgerdk/article/' . $this->identifier());
   }
+
+  /**
+   * Schedules this article to be resynched
+   *
+   */
+  public function scheduleForResynch() {
+    $this->resynch = 1;
+    $this->save();
+  }
 }
