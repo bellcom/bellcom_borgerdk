@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Custom controller for the administrator UI: Seflservice
  */
@@ -53,7 +54,7 @@ class BorgerdkSelfserviceUIController extends EntityDefaultUIController {
     $borgerdk_selfservice_array = !empty($borgerdk_selfservice_results) ? borgerdk_selfservice_load_multiple(array_keys($borgerdk_selfservice_results)) : array();
     foreach ($borgerdk_selfservice_array as $entity_id => $ss) {
       $article = borgerdk_article_load($ss->article_id);
-      $microarticle = null;
+      $microarticle = NULL;
       if ($ss->microarticle_id) {
         $microarticle = borgerdk_microarticle_load($ss->microarticle_id);
       }
@@ -63,9 +64,9 @@ class BorgerdkSelfserviceUIController extends EntityDefaultUIController {
 
       $options[$entity_id] = array(
         'title' => l($ss->title, $entity_path),
-        'url' => l(mb_substr($ss->url, 0, 50) . '...' , $ss->url, array('attributes' => array('target'=>'_blank'))),
+        'url' => l(mb_substr($ss->url, 0, 50) . '...', $ss->url, array('attributes' => array('target' => '_blank'))),
         'articleId' => l($article->entity_id, entity_uri('borgerdk_article', $article)['path']),
-        'microarticleId' => ($microarticle)? l($microarticle->entity_id, entity_uri('borgerdk_microarticle', $microarticle)['path']) : '',
+        'microarticleId' => ($microarticle) ? l($microarticle->entity_id, entity_uri('borgerdk_microarticle', $microarticle)['path']) : '',
         'author' => ($author->uid) ? theme('username', array('account' => $author)) : 'Borger.dk',
         'edit' =>
           l(t('Edit'), "$entity_path/edit", array('query' => array('destination' => entity_get_info('borgerdk_selfservice')['admin ui']['path']))),

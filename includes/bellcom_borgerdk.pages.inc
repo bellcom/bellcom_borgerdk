@@ -11,10 +11,13 @@ function bellcom_borgerdk_article_view($borgerdk_article) {
 /**
  * Borger.dk microarticle view callback.
  */
-function bellcom_borgerdk_microarticle_view($borgerdk_microarticle, $revision = false) {
+function bellcom_borgerdk_microarticle_view($borgerdk_microarticle, $revision = FALSE) {
   drupal_set_title(entity_label('borgerdk_microarticle', $borgerdk_microarticle));
   if ($revision) {
-    drupal_set_title(t('Revision of %title from %date', array('%title' => $borgerdk_microarticle->title, '%date' => format_date($borgerdk_microarticle->changed))), PASS_THROUGH);
+    drupal_set_title(t('Revision of %title from %date', array(
+      '%title' => $borgerdk_microarticle->title,
+      '%date' => format_date($borgerdk_microarticle->changed)
+    )), PASS_THROUGH);
   }
   return entity_view('borgerdk_microarticle', array(entity_id('borgerdk_microarticle', $borgerdk_microarticle) => $borgerdk_microarticle), 'full');
 }
@@ -22,10 +25,13 @@ function bellcom_borgerdk_microarticle_view($borgerdk_microarticle, $revision = 
 /**
  * Borger.dk self-service view callback.
  */
-function bellcom_borgerdk_selfservice_view($borgerdk_selfservice, $revision = false) {
+function bellcom_borgerdk_selfservice_view($borgerdk_selfservice, $revision = FALSE) {
   drupal_set_title(entity_label('borgerdk_selfservice', $borgerdk_selfservice));
   if ($revision) {
-    drupal_set_title(t('Revision of %title from %date', array('%title' => $borgerdk_selfservice->title, '%date' => format_date($borgerdk_selfservice->changed))), PASS_THROUGH);
+    drupal_set_title(t('Revision of %title from %date', array(
+      '%title' => $borgerdk_selfservice->title,
+      '%date' => format_date($borgerdk_selfservice->changed)
+    )), PASS_THROUGH);
   }
   return entity_view('borgerdk_selfservice', array(entity_id('borgerdk_selfservice', $borgerdk_selfservice) => $borgerdk_selfservice), 'full');
 }

@@ -3,7 +3,9 @@ define('BELLCOM_BORGERDK_QUEUE', 'bellcom_borgerdk_cron_queue');
 define('BELLCOM_BORGERDK_QUEUE_CHUNK_SIZE', 10); //used when scheduling items to be imported
 define('BELLCOM_BORGERDK_CONTROLLER_UI_PAGER_LIMIT', 25); //used when presenting items in admin overview
 
-
+module_load_include('inc', 'bellcom_borgerdk', 'entities/bellcom_borgerdk_article.entity');
+module_load_include('inc', 'bellcom_borgerdk', 'entities/bellcom_borgerdk_microarticle.entity');
+module_load_include('inc', 'bellcom_borgerdk', 'entities/bellcom_borgerdk_selfservice.entity');
 module_load_include('inc', 'bellcom_borgerdk', 'includes/bellcom_borgerdk.fields');
 module_load_include('inc', 'bellcom_borgerdk', 'includes/bellcom_borgerdk.synch');
 module_load_include('inc', 'bellcom_borgerdk', 'admin/bellcom_borgerdk.article.admin');
@@ -16,186 +18,9 @@ module_load_include('inc', 'bellcom_borgerdk', 'admin/bellcom_borgerdk.selfservi
 function bellcom_borgerdk_menu() {
   $items = array();
 
-  $items['borgerdk/synch'] = array(
-    'title' => 'Borger.dk - test',
-    'page callback' => 'bellcom_borgedk_test',
-    'access arguments' => array('access content'),
-    'file' => 'includes/bellcom_borgerdk.synch.inc'
-  );
-
-  /** Borger.dk Article section start */
-  $article_uri = 'borgerdk/article/%borgerdk_article';
-  $article_uri_argument_position = 2;
-  $items[$article_uri] = array(
-    'title callback' => 'entity_label',
-    'title arguments' => array('borgerdk_article', $article_uri_argument_position),
-    'page callback' => 'bellcom_borgerdk_article_view',
-    'page arguments' => array($article_uri_argument_position),
-    'access callback' => 'entity_access',
-    'access arguments' => array('view', 'borgerdk_article', $article_uri_argument_position),
-    'file' => 'includes/bellcom_borgerdk.pages.inc',
-  );
-  $items[$article_uri . '/view'] = array(
-    'title' => 'View',
-    'type' => MENU_DEFAULT_LOCAL_TASK,
-    'weight' => -10,
-  );
-  $items[$article_uri . '/delete'] = array(
-    'title' => 'Delete Borger.dk Article',
-    'page callback' => 'drupal_get_form',
-    'page arguments' => array('bellcom_borgerdk_article_delete_form', $article_uri_argument_position),
-    'access callback' => 'entity_access',
-    'access arguments' => array('delete', 'borgerdk_article', $article_uri_argument_position),
-    'type' => MENU_LOCAL_TASK,
-    'weight' => 0,
-  );
-  /** Borger.dk Article section end */
-
-  /** Borger.dk Microarticle section start */
-  $microarticle_uri = 'borgerdk/microarticle/%borgerdk_microarticle';
-  $microarticle_uri_argument_position = 2;
-  $items[$microarticle_uri] = array(
-    'title callback' => 'entity_label',
-    'title arguments' => array('borgerdk_microarticle', $microarticle_uri_argument_position),
-    'page callback' => 'bellcom_borgerdk_microarticle_view',
-    'page arguments' => array($microarticle_uri_argument_position),
-    'access callback' => 'entity_access',
-    'access arguments' => array('view', 'borgerdk_microarticle', $microarticle_uri_argument_position),
-    'file' => 'includes/bellcom_borgerdk.pages.inc',
-  );
-  $items[$microarticle_uri . '/view'] = array(
-    'title' => 'View',
-    'type' => MENU_DEFAULT_LOCAL_TASK,
-    'weight' => -10,
-  );
-  $items[$microarticle_uri . '/edit'] = array(
-    'title' => 'Edit',
-    'page callback' => 'drupal_get_form',
-    'page arguments' => array('borgerdk_microarticle_form', $microarticle_uri_argument_position),
-    'access callback' => 'entity_access',
-    'access arguments' => array('update', 'borgerdk_microarticle', $microarticle_uri_argument_position),
-    'type' => MENU_LOCAL_TASK,
-    'context' => MENU_CONTEXT_PAGE | MENU_CONTEXT_INLINE,
-    'weight' => 0,
-  );
-  $items[$microarticle_uri . '/delete'] = array(
-    'title' => 'Delete microarticle',
-    'page callback' => 'drupal_get_form',
-    'page arguments' => array('bellcom_borgerdk_microarticle_delete_form', $microarticle_uri_argument_position),
-    'access callback' => 'entity_access',
-    'access arguments' => array('delete', 'borgerdk_microarticle', $microarticle_uri_argument_position),
-    'weight' => 2,
-    'type' => MENU_LOCAL_TASK,
-    'context' => MENU_CONTEXT_PAGE | MENU_CONTEXT_INLINE,
-  );
-  $items[$microarticle_uri . '/revisions'] = array(
-    'title' => 'Revisions',
-    'page callback' => 'bellcom_borgerdk_microarticle_revision_overview',
-    'page arguments' => array($microarticle_uri_argument_position),
-    'access callback' => 'entity_access',
-    'access arguments' => array('update', 'borgerdk_microarticle', $microarticle_uri_argument_position),
-    'weight' => 1,
-    'type' => MENU_LOCAL_TASK,
-  );
-  $items[$microarticle_uri . '/revisions/%/view'] = array(
-    'title' => 'Revisions',
-    'load arguments' => array(4),
-    'page callback' => 'bellcom_borgerdk_microarticle_view',
-    'page arguments' => array($microarticle_uri_argument_position, TRUE),
-    'access callback' => 'entity_access',
-    'access arguments' => array('view', 'borgerdk_microarticle', $microarticle_uri_argument_position),
-    'file' => 'includes/bellcom_borgerdk.pages.inc',
-  );
-  $items[$microarticle_uri . '/revisions/%/revert'] = array(
-    'title' => 'Revert to earlier revision',
-    'load arguments' => array(4),
-    'page callback' => 'drupal_get_form',
-    'page arguments' => array('bellcom_borgerdk_microarticle_revision_revert_confirm', $microarticle_uri_argument_position),
-    'access callback' => 'entity_access',
-    'access arguments' => array('update', 'borgerdk_microarticle', $microarticle_uri_argument_position),
-  );
-  $items[$microarticle_uri . '/revisions/%/delete'] = array(
-    'title' => 'Delete earlier revision',
-    'load arguments' => array(4),
-    'page callback' => 'drupal_get_form',
-    'page arguments' => array('bellcom_borgerdk_microarticle_revision_delete_confirm', $microarticle_uri_argument_position),
-    'access callback' => 'entity_access',
-    'access arguments' => array('delete', 'borgerdk_microarticle', $microarticle_uri_argument_position),
-  );
-  /** Borger.dk Microarticle section end */
-
-  /** Borger.dk Selfservice section start */
-  $selfservice_uri = 'borgerdk/selfservice/%borgerdk_selfservice';
-  $selfservice_uri_argument_position = 2;
-  $items[$selfservice_uri] = array(
-    'title callback' => 'entity_label',
-    'title arguments' => array('borgerdk_selfservice', $selfservice_uri_argument_position),
-    'page callback' => 'bellcom_borgerdk_selfservice_view',
-    'page arguments' => array($selfservice_uri_argument_position),
-    'access callback' => 'entity_access',
-    'access arguments' => array('view', 'borgerdk_selfservice', $selfservice_uri_argument_position),
-    'file' => 'includes/bellcom_borgerdk.pages.inc',
-  );
-  $items[$selfservice_uri . '/view'] = array(
-    'title' => 'View',
-    'type' => MENU_DEFAULT_LOCAL_TASK,
-    'weight' => -10,
-  );
-  $items[$selfservice_uri . '/edit'] = array(
-    'title' => 'Edit',
-    'page callback' => 'drupal_get_form',
-    'page arguments' => array('borgerdk_selfservice_form', $selfservice_uri_argument_position),
-    'access callback' => 'entity_access',
-    'access arguments' => array('update', 'borgerdk_selfservice', $selfservice_uri_argument_position),
-    'type' => MENU_LOCAL_TASK,
-    'context' => MENU_CONTEXT_PAGE | MENU_CONTEXT_INLINE,
-    'weight' => 0,
-  );
-  $items[$selfservice_uri . '/delete'] = array(
-    'title' => 'Delete self-service',
-    'page callback' => 'drupal_get_form',
-    'page arguments' => array('bellcom_borgerdk_selfservice_delete_form', $selfservice_uri_argument_position),
-    'access callback' => 'entity_access',
-    'access arguments' => array('delete', 'borgerdk_selfservice', $selfservice_uri_argument_position),
-    'type' => MENU_LOCAL_TASK,
-    'context' => MENU_CONTEXT_PAGE | MENU_CONTEXT_INLINE,
-    'weight' => 2,
-  );
-  $items[$selfservice_uri . '/revisions'] = array(
-    'title' => 'Revisions',
-    'page callback' => 'bellcom_borgerdk_selfservice_revision_overview',
-    'page arguments' => array($selfservice_uri_argument_position),
-    'access callback' => 'entity_access',
-    'access arguments' => array('update', 'borgerdk_selfservice', $selfservice_uri_argument_position),
-    'weight' => 1,
-    'type' => MENU_LOCAL_TASK,
-  );
-  $items[$selfservice_uri . '/revisions/%/view'] = array(
-    'title' => 'Revisions',
-    'load arguments' => array(4),
-    'page callback' => 'bellcom_borgerdk_selfservice_view',
-    'page arguments' => array($selfservice_uri_argument_position, TRUE),
-    'access callback' => 'entity_access',
-    'access arguments' => array('view', 'borgerdk_selfservice', $selfservice_uri_argument_position),
-    'file' => 'includes/bellcom_borgerdk.pages.inc',
-  );
-  $items[$selfservice_uri . '/revisions/%/revert'] = array(
-    'title' => 'Revert to earlier revision',
-    'load arguments' => array(4),
-    'page callback' => 'drupal_get_form',
-    'page arguments' => array('bellcom_borgerdk_selfservice_revision_revert_confirm', $selfservice_uri_argument_position),
-    'access callback' => 'entity_access',
-    'access arguments' => array('update', 'borgerdk_selfservice', $selfservice_uri_argument_position),
-  );
-  $items[$selfservice_uri . '/revisions/%/delete'] = array(
-    'title' => 'Delete earlier revision',
-    'load arguments' => array(4),
-    'page callback' => 'drupal_get_form',
-    'page arguments' => array('bellcom_borgerdk_selfservice_revision_delete_confirm', $selfservice_uri_argument_position),
-    'access callback' => 'entity_access',
-    'access arguments' => array('delete', 'borgerdk_selfservice', $selfservice_uri_argument_position),
-  );
-  /** Borger.dk Selfservice section end */
+  $items += bellcom_borgedk_article_menu();
+  $items += bellcom_borgerdk_microarticle_menu();
+  $items += bellcom_borgerdk_selfservice_menu();
 
   return $items;
 }
@@ -207,13 +32,6 @@ function bellcom_borgerdk_menu() {
  * Add the articles that need to be resynched to the dedicated queue.
  */
 function bellcom_borgerdk_cron() {
-  // Check if we should run import/update of articles.
-  //$time_interval = variable_get('borger_articles_cron_job_interval', 24);
-  //$last_execute = variable_get('borger_articles_cron_last_execute', 0);
-  //$next_execute = $last_execute + $time_interval * 60 * 60;
-
-  //if ($next_execute <= time()) {
-  // Create queue to handle all articles.
   $queue = DrupalQueue::get(BELLCOM_BORGERDK_QUEUE);
 
   if ($queue_size = $queue->numberOfItems()) {
@@ -236,7 +54,6 @@ function bellcom_borgerdk_cron() {
       watchdog('Bellcom Borger.dk', $e->getMessage(), WATCHDOG_ERROR);
     }
   }
-  //}
 }
 
 /**
@@ -250,102 +67,15 @@ function bellcom_borgerdk_cron_queue_info() {
   return $queues;
 }
 
-function bellcom_borgerdk_preprocess_node($variables) {
-  //dpm($variables);
-}
-
-function bellcom_borgerdk_preprocess_field(&$variables) {
-  //dpm($variables);
-  if ($variables['element']['#entity_type'] == 'borgerdk_microarticle') {
-    //$variables['element']['#bundle'] = 'borgerdk_article';
-
-    //$variables['theme_hook_suggestions'] = array('field__entity_id__borgerdk_article');
-    //dpm($variables);
-  }
-}
-
 /**
  * Implements hook_entity_info().
  */
 function bellcom_borgerdk_entity_info() {
-  $info = array(
-    'borgerdk_article' => array(
-      'label' => t('Borger.dk Article'),
-      'entity class' => 'BorgerdkArticleEntity',
-      'controller class' => 'BorgerdkArticleController',
-      'base table' => 'borgerdk_article',
-      'fieldable' => TRUE,
-      'entity keys' => array(
-        'id' => 'entity_id',
-      ),
-      'load hook' => 'borgerdk_article_load',
-      'view modes' => array(
-        'full' => array(
-          'label' => t('Default'),
-          'custom settings' => TRUE,
-        ),
-      ),
-      'label callback' => 'entity_class_label',
-      'uri callback' => 'entity_class_uri',
-      'access callback' => 'borgerdk_article_access',
-      'admin ui' => array(
-        'path' => 'admin/content/borgerdk-articles',
-        'controller class' => 'BorgerdkArticleUIController',
-      ),
-    ),
-    'borgerdk_microarticle' => array(
-      'label' => t('Borger.dk Microarticle'),
-      'entity class' => 'BorgerdkMicroarticleEntity',
-      'controller class' => 'BorgerdkMicroarticleController',
-      'base table' => 'borgerdk_microarticle',
-      'revision table' => 'borgerdk_microarticle_revision',
-      'fieldable' => TRUE,
-      'entity keys' => array(
-        'id' => 'entity_id',
-        'revision' => 'vid',
-      ),
-      'load hook' => 'borgerdk_microarticle_load',
-      'view modes' => array(
-        'full' => array(
-          'label' => t('Default'),
-          'custom settings' => FALSE,
-        ),
-      ),
-      'label callback' => 'entity_class_label',
-      'uri callback' => 'entity_class_uri',
-      'access callback' => 'borgerdk_microarticle_access',
-      'admin ui' => array(
-        'path' => 'admin/content/borgerdk-microarticles',
-        'controller class' => 'BorgerdkMicroarticleUIController',
-      ),
-    ),
-    'borgerdk_selfservice' => array(
-      'label' => t('Borger.dk Selfservice'),
-      'entity class' => 'BorgerdkSelfserviceEntity',
-      'controller class' => 'BorgerdkSelfserviceController',
-      'base table' => 'borgerdk_selfservice',
-      'revision table' => 'borgerdk_selfservice_revision',
-      'fieldable' => TRUE,
-      'entity keys' => array(
-        'id' => 'entity_id',
-        'revision' => 'vid',
-      ),
-      'load hook' => 'borgerdk_selfservice_load',
-      'view modes' => array(
-        'full' => array(
-          'label' => t('Default'),
-          'custom settings' => FALSE,
-        ),
-      ),
-      'label callback' => 'entity_class_label',
-      'uri callback' => 'entity_class_uri',
-      'access callback' => 'borgerdk_selfservice_access',
-      'admin ui' => array(
-        'path' => 'admin/content/borgerdk-selfservices',
-        'controller class' => 'BorgerdkSelfserviceUIController',
-      ),
-    ),
-  );
+  $info = array();
+
+  $info += bellcom_borgedk_article_entity_info();
+  $info += bellcom_borgedk_microarticle_entity_info();
+  $info += bellcom_borgerdk_selfservice_entity_info();
 
   return $info;
 }
@@ -378,115 +108,4 @@ function bellcom_borgerdk_permission() {
   );
 
   return $permissions;
-}
-
-
-/** borgerdk_article entity functions */
-function borgerdk_article_load($entity_id = NULL, $reset = FALSE) {
-  $articles = borgerdk_article_load_multiple(array($entity_id), array(), $reset);
-  return reset($articles);
-}
-
-function borgerdk_article_load_multiple($entity_ids = FALSE, $conditions = array(), $reset = FALSE) {
-  return entity_load('borgerdk_article', $entity_ids, $conditions, $reset);
-}
-
-function borgerdk_article_save($entity) {
-  entity_save('borgerdk_article', $entity);
-}
-
-function borgerdk_article_delete($entity) {
-  entity_delete('borgerdk_article', entity_id('borgerdk_article', $entity));
-}
-
-function borgerdk_article_delete_multiple($entity_ids) {
-  entity_delete_multiple('borgerdk_article', $entity_ids);
-}
-
-function borgerdk_article_access($op, $entity, $account = NULL, $entity_type) {
-  if ($op == 'create') {
-    return user_access('administer borgerdk_article');
-  }
-  if (isset($entity)) {
-    $account = isset($account) ? $account : $GLOBALS['user'];
-    if (user_access("$op borgerdk_article", $account)) {
-      return TRUE;
-    }
-  }
-}
-
-/** borgerdk_microarticle entity functions */
-function borgerdk_microarticle_load($entity_id = NULL, $vid = NULL, $reset = FALSE) {
-  $conditions = (isset($vid) ? array('vid' => $vid) : array());
-  $entities = borgerdk_microarticle_load_multiple(array($entity_id), $conditions, $reset);
-  return reset($entities);
-}
-
-function borgerdk_microarticle_load_multiple($entity_ids = FALSE, $conditions = array(), $reset = FALSE) {
-  return entity_load('borgerdk_microarticle', $entity_ids, $conditions, $reset);
-}
-
-function borgerdk_microarticle_save($entity) {
-  entity_save('borgerdk_microarticle', $entity);
-}
-
-function borgerdk_microarticle_delete($entity) {
-  entity_delete('borgerdk_microarticle', entity_id('borgerdk_microarticle', $entity));
-}
-
-function borgerdk_microarticle_delete_multiple($entity_ids) {
-  entity_delete_multiple('borgerdk_microarticle', $entity_ids);
-}
-
-function borgerdk_microarticle_delete_revision($revision_id) {
-  entity_revision_delete('borgerdk_microarticle', $revision_id);
-}
-
-function borgerdk_microarticle_access($op, $entity, $account = NULL, $entity_type) {
-  if ($op == 'create') {
-    return user_access('administer borgerdk_article');
-  }
-  if ($entity) {
-    //relay on article access
-    $article = borgerdk_article_load($entity->article_id);
-    return borgerdk_article_access($op, $article, $account, 'borgerdk_article');
-  }
-}
-
-/** borgerdk_selfservice entity functions */
-function borgerdk_selfservice_load($entity_id = NULL, $vid = NULL, $reset = FALSE) {
-  $conditions = (isset($vid) ? array('vid' => $vid) : array());
-  $entities = borgerdk_selfservice_load_multiple(array($entity_id), $conditions, $reset);
-  return reset($entities);
-}
-
-function borgerdk_selfservice_load_multiple($entity_ids = FALSE, $conditions = array(), $reset = FALSE) {
-  return entity_load('borgerdk_selfservice', $entity_ids, $conditions, $reset);
-}
-
-function borgerdk_selfservice_save($entity) {
-  entity_save('borgerdk_selfservice', $entity);
-}
-
-function borgerdk_selfservice_delete($entity) {
-  entity_delete('borgerdk_selfservice', entity_id('borgerdk_selfservice', $entity));
-}
-
-function borgerdk_selfservice_delete_multiple($entity_ids) {
-  entity_delete_multiple('borgerdk_selfservice', $entity_ids);
-}
-
-function borgerdk_selfservice_delete_revision($revision_id) {
-  entity_revision_delete('borgerdk_selfservice', $revision_id);
-}
-
-function borgerdk_selfservice_access($op, $entity, $account = NULL, $entity_type) {
-  if ($op == 'create') {
-    return user_access('administer borgerdk_article');
-  }
-  if ($entity) {
-    //relay on article access
-    $article = borgerdk_article_load($entity->article_id);
-    return borgerdk_article_access($op, $article, $account, 'borgerdk_article');
-  }
 }

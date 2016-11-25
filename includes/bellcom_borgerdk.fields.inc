@@ -154,8 +154,6 @@ function bellcom_borgerdk_reload_article_info(&$form, &$form_state) {
   $wrapper = $form[$field_name]['und'][$delta]['borgerdk_article_field'];
   $wrapper['#title'] = t('Borger.dk article: @title', array('@title' => $selected_article_title));
 
-  //drupal_set_message('<pre>' . print_r($wrapper,1) . '</pre>');
-
   $form_state['rebuild'] = TRUE;
   return array(
     '#type' => 'ajax',
@@ -206,16 +204,7 @@ function bellcom_borgerdk_field_is_empty($item, $field) {
  * Implements hook_field_validate().
  */
 function bellcom_borgerdk_field_validate($entity_type, $entity, $field, $instance, $langcode, $items, &$errors) {
-  // Loop through field items in the case of multiple values.
-//  foreach ($items as $delta => $item) {
-//    if (isset($item['borgerdk_article_entity_id']) && $item['borgerdk_article_entity_id'] != '') {
-//      if (!valid_license_plate($item['borgerdk_article_entity_id'])) {
-//        $errors[$field['field_name']][$langcode][$delta][] = array(
-//          'error' => t('Invalid license plate number.'),
-//        );
-//      }
-//    }
-//  }
+  //no validation required
 }
 
 /**

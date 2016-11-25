@@ -2,6 +2,12 @@
 
 abstract class BorgerdkAbstractEntityController extends EntityAPIController {
 
+  /**
+   * Sets created, changed time to the time of request, and delegaes to parent create function
+   *
+   * @param array $values
+   * @return object
+   */
   public function create(array $values = array()) {
     $values += array(
       'created' => REQUEST_TIME,
@@ -11,6 +17,13 @@ abstract class BorgerdkAbstractEntityController extends EntityAPIController {
     return parent::create($values);
   }
 
+  /**
+   * Updates the entity changed time, and delegates to part save function
+   *
+   * @param $entity
+   * @param DatabaseTransaction $transaction
+   * @return bool|int
+   */
   public function save($entity, DatabaseTransaction $transaction = NULL) {
     //update the changed time only if we don't have versioning
     //or if the operation is in fact creating the new revision.

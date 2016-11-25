@@ -17,13 +17,13 @@ function bellcom_borgerdk_article_map($entity_article, $soap_article) {
     $entity_article->header = $soap_article->header;
   }
   if (isset($soap_article->legislation)) {
-    $entity_article->legislation =$soap_article->legislation->content;
+    $entity_article->legislation = $soap_article->legislation->content;
   }
   if (isset($soap_article->recommendation)) {
-    $entity_article->recommendation =$soap_article->recommendation->content;
+    $entity_article->recommendation = $soap_article->recommendation->content;
   }
   if (isset($soap_article->byline)) {
-    $entity_article->byline =$soap_article->byline;
+    $entity_article->byline = $soap_article->byline;
   }
 
   return $entity_article;

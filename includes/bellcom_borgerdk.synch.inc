@@ -6,15 +6,6 @@ use BorgerDk\ArticleService\Resources\Endpoints\GetArticlesByIDs;
 
 module_load_include('inc', 'bellcom_borgerdk', 'includes/bellcom_borgerdk.mapper');
 
-function bellcom_borgedk_test(){
-  $client = new BorgerDkClient();
-  $params = array('articleIDs' => array(35));
-
-  $articles = new GetArticlesByIDs($client, $params);
-  $articles->getResultFormatted();
-
-  return 'test';
-}
 /**
  * Fetches the information about the articles (except the content) and creates/updates the database entry.
  * If the article is new or outdated it is marked with a 'resynch' flag.
@@ -27,7 +18,7 @@ function bellcom_borgerdk_fetch_articles() {
   $exisiting_articles = borgerdk_article_load_multiple(array_keys($articles));
 
   foreach ($articles as $id => $article) {
-    $entity_article = null;
+    $entity_article = NULL;
     if (array_key_exists($id, $exisiting_articles)) {
       $entity_article = $exisiting_articles[$id];
     }
@@ -56,7 +47,7 @@ function bellcom_borgerdk_fetch_articles() {
  * @return array of borgerdk_article entities.
  */
 function bellcom_borgedk_get_resynch_articles() {
-  return borgerdk_article_load_multiple(false, array('resynch' => 1));
+  return borgerdk_article_load_multiple(FALSE, array('resynch' => 1));
 }
 
 /**
@@ -76,20 +67,22 @@ function bellcom_borgerdk_queue_worker($items) {
   if (isset($result_raw->Article)) {
     if (is_array($result_raw->Article)) {
       $result_raw = $result_raw->Article;
-    } else {
+    }
+    else {
       $result_raw = array($result_raw->Article);
     }
-  } else {
+  }
+  else {
     $result_raw = array($result_raw);
   }
 
   $existing_articles = borgerdk_article_load_multiple(array_keys($items));
 
-  foreach($result_raw as $article_raw) {
-    $article = null;
+  foreach ($result_raw as $article_raw) {
+    $article = NULL;
     try {
       $article = $articles_resource->formatSingleArticle($article_raw);
-    } catch (Exception $e){
+    } catch (Exception $e) {
       watchdog('Bellcom Borger.dk', 'Ignoring article ID: %id. Error: %error',
         array('%id' => $article_raw->ArticleID, '%error' => $e->getMessage()), WATCHDOG_ERROR);
       continue;

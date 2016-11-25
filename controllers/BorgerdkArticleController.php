@@ -5,6 +5,12 @@
  */
 class BorgerdkArticleController extends BorgerdkAbstractEntityController {
 
+  /**
+   * Sets resynch flag to 1 and delegates to parent create function.
+   *
+   * @param array $values
+   * @return object
+   */
   public function create(array $values = array()) {
     $values += array(
       'resynch' => TRUE,
@@ -12,6 +18,15 @@ class BorgerdkArticleController extends BorgerdkAbstractEntityController {
     return parent::create($values);
   }
 
+  /**
+   * Builds content overview for full and basic info view_mode
+   *
+   * @param $entity
+   * @param string $view_mode
+   * @param null $langcode
+   * @param array $content
+   * @return array
+   */
   public function buildContent($entity, $view_mode = 'full', $langcode = NULL, $content = array()) {
     $weight = 0;
 
@@ -206,14 +221,21 @@ class BorgerdkArticleController extends BorgerdkAbstractEntityController {
     return parent::buildContent($entity, $view_mode, $langcode, $content);
   }
 
+  /**
+   * Before deleting the entity itself deletes all its childred - microrticles and self-services,
+   * after that delegates to parent delete function.
+   *
+   * @param $ids
+   * @param DatabaseTransaction $transaction
+   */
   public function delete($ids, DatabaseTransaction $transaction = NULL) {
-    foreach($ids as $id) {
+    foreach ($ids as $id) {
       //deleting self-services
-      $selfservices = borgerdk_selfservice_load_multiple(false, array('article_id' => $id), true);
+      $selfservices = borgerdk_selfservice_load_multiple(FALSE, array('article_id' => $id), TRUE);
       borgerdk_selfservice_delete_multiple(array_keys($selfservices));
 
       //deleting microarticles
-      $microarticles = borgerdk_microarticle_load_multiple(false, array('article_id' => $id), true);
+      $microarticles = borgerdk_microarticle_load_multiple(FALSE, array('article_id' => $id), TRUE);
       borgerdk_microarticle_delete_multiple(array_keys($microarticles));
     }
 

@@ -5,19 +5,36 @@
  */
 class BorgerdkMicroarticleController extends BorgerdkAbstractEntityController {
 
+  /**
+   * If empty generates the entity id, fills author information
+   * after that delegates to parent save function
+   *
+   * @param $entity
+   * @param DatabaseTransaction $transaction
+   * @return bool|int
+   */
   public function save($entity, DatabaseTransaction $transaction = NULL) {
     if (isset($entity->is_new) && $entity->is_new && !isset($entity->entity_id)) {
       $entity->entity_id = parent::generateEntityId($entity);
     }
     global $user;
     $entity->uid = $user->uid;
-    //default setting = creating a new revisiton is not mentioned otherwise
+    //default setting = creating a new revision if not mentioned otherwise
     if (!isset($entity->is_new_revision)) {
       $entity->is_new_revision = TRUE;
     }
     return parent::save($entity, $transaction);
   }
 
+  /**
+   * Builds entity overview for full and teaser view_modes.
+   *
+   * @param $entity
+   * @param string $view_mode
+   * @param null $langcode
+   * @param array $content
+   * @return array
+   */
   public function buildContent($entity, $view_mode = 'full', $langcode = NULL, $content = array()) {
     $weight = 0;
 
@@ -134,6 +151,12 @@ class BorgerdkMicroarticleController extends BorgerdkAbstractEntityController {
     return parent::buildContent($entity, $view_mode, $langcode, $content);
   }
 
+  /**
+   * Before deleting the entity itself the content makes all child self-services orphaned.
+   *
+   * @param $ids
+   * @param DatabaseTransaction $transaction
+   */
   public function delete($ids, DatabaseTransaction $transaction = NULL) {
     //orphaning self-services
     foreach ($ids as $id) {

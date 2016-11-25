@@ -5,6 +5,14 @@
  */
 class BorgerdkSelfserviceController extends BorgerdkAbstractEntityController {
 
+  /**
+   * If empty generates the entity id, fills author information
+   * after that delegates to parent save function
+   *
+   * @param $entity
+   * @param DatabaseTransaction $transaction
+   * @return bool|int
+   */
   public function save($entity, DatabaseTransaction $transaction = NULL) {
     if (isset($entity->is_new) && $entity->is_new && !isset($entity->entity_id)) {
       $entity->entity_id = parent::generateEntityId($entity);
@@ -18,12 +26,21 @@ class BorgerdkSelfserviceController extends BorgerdkAbstractEntityController {
 
     //if microarticle_id is 0 set it to null, to keep the data consistent
     if (isset($entity->microarticle_id) && $entity->microarticle_id == 0) {
-      $entity->microarticle_id = null;
+      $entity->microarticle_id = NULL;
     }
 
     return parent::save($entity, $transaction);
   }
 
+  /**
+   * Builds entity overview for full and teaser view_modes.
+   *
+   * @param $entity
+   * @param string $view_mode
+   * @param null $langcode
+   * @param array $content
+   * @return array
+   */
   public function buildContent($entity, $view_mode = 'full', $langcode = NULL, $content = array()) {
     $weight = 0;
 
@@ -37,7 +54,7 @@ class BorgerdkSelfserviceController extends BorgerdkAbstractEntityController {
     $content['entity_id'] = array(
         '#theme' => 'field',
         '#weight' => $weight++,
-        '#title' =>t('Entity ID'),
+        '#title' => t('Entity ID'),
         '#field_name' => 'entity_id',
         '#field_type' => 'text',
         '#items' => array(array('value' => $entity->entity_id)),
@@ -48,7 +65,7 @@ class BorgerdkSelfserviceController extends BorgerdkAbstractEntityController {
     $content['title'] = array(
         '#theme' => 'field',
         '#weight' => $weight++,
-        '#title' =>t('Title'),
+        '#title' => t('Title'),
         '#field_name' => 'title',
         '#field_type' => 'text',
         '#items' => array(array('value' => $entity->title)),
@@ -59,7 +76,7 @@ class BorgerdkSelfserviceController extends BorgerdkAbstractEntityController {
     $content['label'] = array(
         '#theme' => 'field',
         '#weight' => $weight++,
-        '#title' =>t('Label'),
+        '#title' => t('Label'),
         '#field_name' => 'label',
         '#field_type' => 'text',
         '#items' => array(array('value' => $entity->label)),
@@ -70,12 +87,12 @@ class BorgerdkSelfserviceController extends BorgerdkAbstractEntityController {
     $content['url'] = array(
         '#theme' => 'field',
         '#weight' => $weight++,
-        '#title' =>t('URL'),
+        '#title' => t('URL'),
         '#field_name' => 'url',
         '#field_type' => 'text',
         '#items' => array(array('value' => $entity->url)),
         '#formatter' => 'text_default',
-        0 => array('#markup' =>  l($entity->url, $entity->url, array('attributes' => array('target'=>'_blank'))))
+        0 => array('#markup' => l($entity->url, $entity->url, array('attributes' => array('target' => '_blank'))))
       ) + $default;
 
     if ($view_mode == 'full') {
@@ -85,26 +102,27 @@ class BorgerdkSelfserviceController extends BorgerdkAbstractEntityController {
           $content['microarticle_id'] = array(
               '#theme' => 'field',
               '#weight' => $weight++,
-              '#title' =>t('Parent Microarticle'),
+              '#title' => t('Parent Microarticle'),
               '#field_name' => 'microarticle_id',
               '#field_type' => 'text',
               '#items' => array(array('value' => $parent_microarticle->title)),
               '#formatter' => 'text_default',
-              0 => array('#markup' =>  l($parent_microarticle->title, entity_uri('borgerdk_microarticle', $parent_microarticle)['path']))
+              0 => array('#markup' => l($parent_microarticle->title, entity_uri('borgerdk_microarticle', $parent_microarticle)['path']))
             ) + $default;
         }
-      } else {
+      }
+      else {
         $parent_article = borgerdk_article_load($entity->article_id);
         if ($parent_article) {
           $content['article_id'] = array(
               '#theme' => 'field',
               '#weight' => $weight++,
-              '#title' =>t('Parent Article'),
+              '#title' => t('Parent Article'),
               '#field_name' => 'article_id',
               '#field_type' => 'text',
               '#items' => array(array('value' => $parent_article->title)),
               '#formatter' => 'text_default',
-              0 => array('#markup' =>  l($parent_article->title, entity_uri('borgerdk_article', $parent_article)['path']))
+              0 => array('#markup' => l($parent_article->title, entity_uri('borgerdk_article', $parent_article)['path']))
             ) + $default;
         }
       }
