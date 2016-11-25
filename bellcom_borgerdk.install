@@ -177,6 +177,13 @@ function bellcom_borgerdk_schema() {
         'length' => 50,
         'not null' => TRUE,
       ),
+      'vid' => array(
+        'description' => 'The ID of the entity\'s default revision.',
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => FALSE,
+        'default' => NULL,
+      ),
       'title' => array(
         'description' => 'A title (href title attribute) for the self-service, taken from Borger.dk',
         'type' => 'varchar',
@@ -228,6 +235,21 @@ function bellcom_borgerdk_schema() {
     ),
     'primary key' => array('entity_id'),
   );
+
+  $schema['borgerdk_selfservice_revision'] = $schema['borgerdk_selfservice'];
+  $schema['borgerdk_selfservice_revision']['fields']['vid'] = array(
+    'description' => 'The primary identifier.',
+    'type' => 'serial',
+    'not null' => TRUE,
+  );
+  $schema['borgerdk_selfservice_revision']['fields']['entity_id'] = array(
+    'description' => 'The ID of the attached entity.',
+    'type' => 'varchar',
+    'length' => 50,
+    'not null' => FALSE,
+    'default' => NULL,
+  );
+  $schema['borgerdk_selfservice_revision']['primary key'] = array('vid');
 
   return $schema;
 }

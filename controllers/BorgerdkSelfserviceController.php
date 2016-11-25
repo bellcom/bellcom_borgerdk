@@ -7,14 +7,20 @@ class BorgerdkSelfserviceController extends BorgerdkAbstractEntityController {
 
   public function save($entity, DatabaseTransaction $transaction = NULL) {
     if (isset($entity->is_new) && $entity->is_new && !isset($entity->entity_id)) {
-      global $user;
-      $entity->uid = $user->uid;
-
       $entity->entity_id = parent::generateEntityId($entity);
     }
+    global $user;
+    $entity->uid = $user->uid;
+    //default setting = creating a new revisiton is not mentioned otherwise
+    if (!isset($entity->is_new_revision)) {
+      $entity->is_new_revision = TRUE;
+    }
+
+    //if microarticle_id is 0 set it to null, to keep the data consistent
     if (isset($entity->microarticle_id) && $entity->microarticle_id == 0) {
       $entity->microarticle_id = null;
     }
+
     return parent::save($entity, $transaction);
   }
 

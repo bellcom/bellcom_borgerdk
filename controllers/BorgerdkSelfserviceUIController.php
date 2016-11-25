@@ -66,7 +66,7 @@ class BorgerdkSelfserviceUIController extends EntityDefaultUIController {
         'url' => l(mb_substr($ss->url, 0, 50) . '...' , $ss->url, array('attributes' => array('target'=>'_blank'))),
         'articleId' => l($article->entity_id, entity_uri('borgerdk_article', $article)['path']),
         'microarticleId' => ($microarticle)? l($microarticle->entity_id, entity_uri('borgerdk_microarticle', $microarticle)['path']) : '',
-        'author' => ($author->uid) ? l($author->name, entity_uri('user', $author)['path']) : 'Borger.dk',
+        'author' => ($author->uid) ? theme('username', array('account' => $author)) : 'Borger.dk',
         'edit' =>
           l(t('Edit'), "$entity_path/edit", array('query' => array('destination' => entity_get_info('borgerdk_selfservice')['admin ui']['path']))),
         'delete' =>

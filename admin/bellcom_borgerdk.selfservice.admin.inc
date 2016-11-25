@@ -26,6 +26,7 @@ function borgerdk_selfservice_form($form, &$form_state, $selfservice = NULL) {
     '#type' => 'textfield',
     '#required' => TRUE,
     '#size' => 100,
+    '#maxlength' => 255,
   );
 
   $article_options = bellcom_borgerdk_field_get_articles_options();
@@ -163,4 +164,160 @@ function bellcom_borgerdk_selfservice_delete_form_submit($form, &$form_state) {
   drupal_set_message(t('Borger.dk self-service %title deleted.', array('%title' => entity_label('borgerdk_selfservice', $selfservice))));
 
   $form_state['redirect'] = '<front>';
+}
+
+/**
+ * Generates an overview table of older revisions of a selfservice.
+ *
+ * @param $selfservice
+ *   A selfservice entity object.
+ *
+ * @return array
+ *   An array as expected by drupal_render().
+ */
+function bellcom_borgerdk_selfservice_revision_overview($selfservice) {
+  drupal_set_title(t('Revisions for %title', array('%title' => $selfservice->title)), PASS_THROUGH);
+
+  $header = array(t('Revision'), array('data' => t('Operations'), 'colspan' => 2));
+
+  $revisions = $selfservice->getRevisionList();
+
+  $rows = array();
+  $revert_permission = FALSE;
+  if ((user_access('administer borgerdk_article')) && entity_access('update', 'borgerdk_selfservice', $selfservice)) {
+    $revert_permission = TRUE;
+  }
+  $delete_permission = FALSE;
+  if ((user_access('administer borgerdk_article')) && entity_access('delete', 'borgerdk_selfservice', $selfservice)) {
+    $delete_permission = TRUE;
+  }
+  foreach ($revisions as $revision) {
+    $row = array();
+    $operations = array();
+
+    $entity_path = entity_uri('borgerdk_selfservice', $selfservice)['path'];
+    if ($revision->current_vid > 0) {
+      $row[] = array(
+        'data' => t('!date by !username', array(
+          '!date' => l(format_date($revision->changed, 'short'), $entity_path),
+          '!username' => ($revision->uid == 0) ? 'Borger.dk' : theme('username', array('account' => $revision))
+        )),
+        'class' => array('revision-current')
+      );
+      $operations[] = array(
+        'data' => drupal_placeholder(t('current revision')),
+        'class' => array('revision-current'),
+        'colspan' => 2
+      );
+    }
+    else {
+      $row[] = t('!date by !username', array(
+        '!date' => l(format_date($revision->changed, 'short'), "$entity_path/revisions/$revision->vid/view"),
+        '!username' => ($revision->uid == 0) ? 'Borger.dk' : theme('username', array('account' => $revision))
+      ));
+      if ($revert_permission) {
+        $operations[] = l(t('revert'), "$entity_path/revisions/$revision->vid/revert");
+      }
+      if ($delete_permission) {
+        $operations[] = l(t('delete'), "$entity_path/revisions/$revision->vid/delete");
+      }
+    }
+    $rows[] = array_merge($row, $operations);
+  }
+
+  $build['borgerdk_selfservice_revisions_table'] = array(
+    '#theme' => 'table',
+    '#rows' => $rows,
+    '#header' => $header,
+  );
+
+  return $build;
+}
+
+/**
+ * Asks for confirmation of the reversion to prevent against CSRF attacks.
+ *
+ * @param int $selfservice_revision
+ *   The selfservice revision ID.
+ *
+ * @return array
+ *   An array as expected by drupal_render().
+ *
+ * @see node_menu()
+ * @see node_revision_revert_confirm_submit()
+ * @ingroup forms
+ */
+function bellcom_borgerdk_selfservice_revision_revert_confirm($form, $form_state, $selfservice_revision) {
+  $form['#selfservice_revision'] = $selfservice_revision;
+  $entity_path = entity_uri('borgerdk_selfservice', $selfservice_revision)['path'];
+  return confirm_form($form, t('Are you sure you want to revert to the revision from %revision-date?', array('%revision-date' => format_date($selfservice_revision->changed))), "$entity_path/revisions", '', t('Revert'), t('Cancel'));
+}
+
+/**
+ * Form submission handler for bellcom_borgerdk_selfservice_revision_revert_confirm().
+ */
+function bellcom_borgerdk_selfservice_revision_revert_confirm_submit($form, &$form_state) {
+  $selfservice_revision = $form['#selfservice_revision'];
+
+  //needed to use this as default revision
+  $selfservice_revision->default_revision = 1;
+  //we don't want another revision entry created
+  $selfservice_revision->is_new_revision = FALSE;
+
+  $revision_timestamp = $selfservice_revision->changed;
+  borgerdk_selfservice_save($selfservice_revision);
+
+  watchdog('content', 'Borger.dk selfservice: reverted %title revision %revision.', array(
+    '%title' => $selfservice_revision->title,
+    '%revision' => $selfservice_revision->vid
+  ));
+  drupal_set_message(t('Borger.dk selfservice %title has been reverted back to the revision from %revision-date.', array(
+    '%title' => $selfservice_revision->title,
+    '%revision-date' => format_date($revision_timestamp)
+  )));
+  $entity_path = entity_uri('borgerdk_selfservice', $selfservice_revision)['path'];
+  $form_state['redirect'] = "$entity_path/revisions";
+}
+
+/**
+ * Form constructor for the revision deletion confirmation form.
+ *
+ * This form prevents against CSRF attacks.
+ *
+ * @param $node_revision
+ *   The node revision ID.
+ *
+ * @return
+ *   An array as expected by drupal_render().
+ *
+ * @see bellcom_borgerdk_selfservice_revision_delete_confirm_submit()
+ * @ingroup forms
+ */
+function bellcom_borgerdk_selfservice_revision_delete_confirm($form, $form_state, $selfservice_revision) {
+  $form['#selfservice_revision'] = $selfservice_revision;
+  $entity_path = entity_uri('borgerdk_selfservice', $selfservice_revision)['path'];
+  return confirm_form($form, t('Are you sure you want to delete the revision from %revision-date?', array('%revision-date' => format_date($selfservice_revision->changed))), "$entity_path/revisions", t('This action cannot be undone.'), t('Delete'), t('Cancel'));
+}
+
+/**
+ * Form submission handler for bellcom_borgerdk_selfservice_revision_delete_confirm().
+ */
+function bellcom_borgerdk_selfservice_revision_delete_confirm_submit($form, &$form_state) {
+  $selfservice_revision = $form['#selfservice_revision'];
+  borgerdk_selfservice_delete_revision($selfservice_revision->vid);
+
+  watchdog('content', 'Borger.dk selfservice deleted %title revision %revision.', array(
+    '%title' => $selfservice_revision->title,
+    '%revision' => $selfservice_revision->vid
+  ));
+  drupal_set_message(t('Revision from %revision-date of Borger.dk selfservice  %title has been deleted.', array(
+    '%revision-date' => format_date($selfservice_revision->changed),
+    '%title' => $selfservice_revision->title
+  )));
+  $entity_path = entity_uri('borgerdk_selfservice', $selfservice_revision)['path'];
+  $form_state['redirect'] = $entity_path;
+
+  if (db_query('SELECT COUNT(vid) FROM {borgerdk_selfservice_revision} WHERE entity_id = :entity_id', array(':entity_id' => $selfservice_revision->entity_id))->fetchField() > 1) {
+    $form_state['redirect'] .= '/revisions';
+  }
 }

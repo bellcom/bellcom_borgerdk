@@ -11,6 +11,11 @@ class BorgerdkMicroarticleEntity extends Entity {
     return array('path' => 'borgerdk/microarticle/' . $this->identifier());
   }
 
+  /**
+   * Returns a list of revisions for this entity.
+   *
+   * @return array of revisions mapped by revision id
+   */
   public function getRevisionList() {
     $revisions = array();
     $result = db_query('

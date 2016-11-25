@@ -10,10 +10,12 @@
 function bellcom_borgerdk_article_map($entity_article, $soap_article) {
   $entity_article->entity_id = $soap_article->id;
   $entity_article->title = $soap_article->title;
-  $entity_article->header = $soap_article->header;
   $entity_article->articleUrl = $soap_article->url;
   $entity_article->lastUpdated = strtotime($soap_article->lastUpdated);
   $entity_article->publishingDate = strtotime($soap_article->publishDate);
+  if (isset($soap_article->header)) {
+    $entity_article->header = $soap_article->header;
+  }
   if (isset($soap_article->legislation)) {
     $entity_article->legislation =$soap_article->legislation->content;
   }

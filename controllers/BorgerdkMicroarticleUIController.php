@@ -65,7 +65,7 @@ class BorgerdkMicroarticleUIController extends EntityDefaultUIController {
         'content' => mb_substr($strip_content, 0, 50) . ((mb_strlen($strip_content) > 50) ? '...' : ''),
         'articleId' => l($article->entity_id, entity_uri('borgerdk_article', $article)['path']),
         'selfservices' => $selfservices_count,
-        'author' => ($author->uid) ? l($author->name, entity_uri('user', $author)['path']) : 'Borger.dk',
+        'author' => ($author->uid) ? theme('username', array('account' => $author)) : 'Borger.dk',
         'edit' =>
           l(t('Edit'), "$entity_path/edit", array('query' => array('destination' => entity_get_info('borgerdk_microarticle')['admin ui']['path']))),
         'delete' =>

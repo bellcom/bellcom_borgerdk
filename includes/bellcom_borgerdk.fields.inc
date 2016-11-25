@@ -144,14 +144,11 @@ function bellcom_borgerdk_field_widget_form(&$form, &$form_state, $field, $insta
  * @return array of ajax commands
  */
 function bellcom_borgerdk_reload_article_info(&$form, &$form_state) {
-  dpm(time());
   $field_name = $form_state['triggering_element']['#parents'][0];
   $delta = $form_state['triggering_element']['#ajax']['delta'];
 
   $selected_article_entity_id = $form_state['triggering_element']['#value'];
   $selected_article_title = $form_state['triggering_element']['#options'][$selected_article_entity_id];
-
-  dpm($selected_article_entity_id);
 
   //getting wrapper fieldset
   $wrapper = $form[$field_name]['und'][$delta]['borgerdk_article_field'];
@@ -338,7 +335,7 @@ function bellcom_borgerdk_field_get_microarticle_options($form_state, $article_e
         'title' => $entity->title,
         'content' => $strip_content,
         'selfservices' => $selfservices_count,
-        'author' => ($author->uid) ? l($author->name, entity_uri('user', $author)['path']) : 'Borger.dk',
+        'author' => ($author->uid) ? theme('username', array('account' => $author)) : 'Borger.dk',
       );
     }
   }
@@ -377,7 +374,7 @@ function bellcom_borgerdk_field_get_selfservice_options($form_state, $article_en
       $options[$entity->entity_id] = array(
         'title' => $entity->title,
         'url' => $entity->url,
-        'author' => ($author->uid) ? l($author->name, entity_uri('user', $author)['path']) : 'Borger.dk',
+        'author' => ($author->uid) ? theme('username', array('account' => $author)) : 'Borger.dk',
       );
     }
   }

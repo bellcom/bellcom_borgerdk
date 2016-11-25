@@ -232,7 +232,7 @@ function bellcom_borgerdk_microarticle_revision_delete_confirm($form, $form_stat
 }
 
 /**
- * Form submission handler for node_revision_delete_confirm().
+ * Form submission handler for bellcom_borgerdk_microarticle_revision_delete_confirm().
  */
 function bellcom_borgerdk_microarticle_revision_delete_confirm_submit($form, &$form_state) {
   $microarticle_revision = $form['#microarticle_revision'];
