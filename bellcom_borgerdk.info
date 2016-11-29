@@ -2,6 +2,7 @@ name = Bellcom Borger.dk
 description = Integration of Borger.dk portal
 package = Bellcom
 core = 7.x
+dependencies[] = composer_manager
 dependencies[] = entity
 files[] = controllers/BorgerdkAbstractEntityController.php
 files[] = entities/BorgerdkArticleEntity.php
