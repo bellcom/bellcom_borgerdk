@@ -75,7 +75,7 @@ class BorgerdkMicroarticleController extends BorgerdkAbstractEntityController {
         '#field_type' => 'text',
         '#items' => array(array('value' => $entity->content)),
         '#formatter' => 'text_default',
-        0 => array('#markup' => strip_tags($entity->content))
+        0 => array('#markup' => $entity->content)
       ) + $default;
 
     $selfservice_link_entities = borgerdk_selfservice_load_multiple(FALSE, array('microarticle_id' => $entity->entity_id));
