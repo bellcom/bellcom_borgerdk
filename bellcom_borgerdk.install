@@ -126,6 +126,12 @@ function bellcom_borgerdk_schema() {
         'type' => 'text',
         'size' => 'big',
       ),
+      'weight' => array(
+        'description' => 'The order of the self-service, taken from Borger.dk',
+        'type' => 'int',
+        'not null' => TRUE,
+        'default' => 0,
+      ),
       'article_id' => array(
         'description' => 'Foreign key to borgerdk_article entity_id',
         'type' => 'int',
@@ -204,6 +210,12 @@ function bellcom_borgerdk_schema() {
         'length' => 255,
         'not null' => TRUE,
         'default' => '',
+      ),
+      'weight' => array(
+        'description' => 'The order of the self-service, taken from Borger.dk',
+        'type' => 'int',
+        'not null' => TRUE,
+        'default' => 0,
       ),
       'article_id' => array(
         'description' => 'Foreign key to borgerdk_article entity_id',

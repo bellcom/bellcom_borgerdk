@@ -114,7 +114,7 @@ class BorgerdkArticleController extends BorgerdkAbstractEntityController {
         0 => array('#markup' => check_plain($entity->byline))
       ) + $default;
 
-    $microarticle_entities = borgerdk_microarticle_load_multiple(FALSE, array('article_id' => $entity->entity_id));
+    $microarticle_entities = borgerdk_microarticle_load_multiple_sorted(FALSE, array('article_id' => $entity->entity_id));
     if (!empty($microarticle_entities)) {
       if ($view_mode == 'full') {
         $content['microarticles'] = array(
@@ -153,7 +153,7 @@ class BorgerdkArticleController extends BorgerdkAbstractEntityController {
       }
     }
 
-    $selfservice_link_entities = borgerdk_selfservice_load_multiple(FALSE, array(
+    $selfservice_link_entities = borgerdk_selfservice_load_multiple_sorted(FALSE, array(
       'article_id' => $entity->entity_id,
       'microarticle_id' => NULL
     ));

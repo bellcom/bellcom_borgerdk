@@ -312,7 +312,7 @@ function bellcom_borgerdk_field_get_microarticle_options($form_state, $article_e
 
   if ($article_entity_id) {
     //load microarticles
-    $entities = borgerdk_microarticle_load_multiple(FALSE, array('article_id' => $article_entity_id), TRUE);
+    $entities = borgerdk_microarticle_load_multiple_sorted(FALSE, array('article_id' => $article_entity_id), TRUE);
 
     foreach ($entities as $entity) {
       $strip_content = strip_tags($entity->content);
@@ -352,7 +352,7 @@ function bellcom_borgerdk_field_get_selfservice_options($form_state, $article_en
 
   if ($article_entity_id) {
     //load self-services
-    $entities = borgerdk_selfservice_load_multiple(FALSE, array(
+    $entities = borgerdk_selfservice_load_multiple_sorted(FALSE, array(
       'article_id' => $article_entity_id,
       'microarticle_id' => NULL
     ), TRUE);

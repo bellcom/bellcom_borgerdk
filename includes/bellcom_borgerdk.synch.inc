@@ -130,9 +130,10 @@ function bellcom_borgerdk_queue_worker($items) {
       $entity_ss = bellcom_borgerdk_selfservice_map($entity_ss, $selfservice);
       $entity_ss->article_id = $entity_article->entity_id;
 
-      //check if we have a microarticle with the same title
-      if (array_key_exists($entity_ss->label, $article_microarticles)) {
-        $related_microarticle = $article_microarticles[$entity_ss->label];
+      //check if we have a microarticle with the similar title
+      $related_ma_name = preg_replace('/(Start\s)/i', '', $entity_ss->title);
+      if (array_key_exists($related_ma_name, $article_microarticles)) {
+        $related_microarticle = $article_microarticles[$related_ma_name];
         $entity_ss->microarticle_id = $related_microarticle->entity_id;
       }
       borgerdk_selfservice_save($entity_ss);

@@ -134,6 +134,20 @@ function borgerdk_microarticle_load_multiple($entity_ids = FALSE, $conditions = 
   return entity_load('borgerdk_microarticle', $entity_ids, $conditions, $reset);
 }
 
+/**
+ * Returns the microarticle list, sorted by microarticle weight
+ *
+ * @param bool $entity_ids
+ * @param array $conditions
+ * @param bool $reset
+ * @return mixed
+ */
+function borgerdk_microarticle_load_multiple_sorted($entity_ids = FALSE, $conditions = array(), $reset = FALSE) {
+  $entities = borgerdk_microarticle_load_multiple($entity_ids, $conditions, $reset);
+  uasort($entities, '_borgerdk_microarticle_sort');
+  return $entities;
+}
+
 function borgerdk_microarticle_save($entity) {
   entity_save('borgerdk_microarticle', $entity);
 }
@@ -159,4 +173,18 @@ function borgerdk_microarticle_access($op, $entity, $account = NULL, $entity_typ
     $article = borgerdk_article_load($entity->article_id);
     return borgerdk_article_access($op, $article, $account, 'borgerdk_article');
   }
+}
+
+/**
+ * Helper function to sort microarticles by weight
+ *
+ * @param $a
+ * @param $b
+ * @return int
+ */
+function _borgerdk_microarticle_sort($a, $b) {
+  if ($a->weight == $b->weight) {
+    return 0;
+  }
+  return ($a->weight < $b->weight) ? -1 : 1;
 }

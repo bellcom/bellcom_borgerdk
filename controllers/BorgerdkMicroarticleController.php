@@ -23,6 +23,19 @@ class BorgerdkMicroarticleController extends BorgerdkAbstractEntityController {
     if (!isset($entity->is_new_revision)) {
       $entity->is_new_revision = TRUE;
     }
+
+    // Calculates the weight of the new microarticle as the weight of the max + 1;
+    if (!isset($entity->weight)) {
+      $existing_mm = borgerdk_microarticle_load_multiple(FALSE, array('article_id' => $entity->article_id));
+      $max_weight = 0;
+      foreach ($existing_mm as $mm) {
+        if ($mm->weight > $max_weight) {
+          $max_weight = $mm->weight;
+        }
+      }
+      $max_weight++;
+      $entity->weight = $max_weight;
+    }
     return parent::save($entity, $transaction);
   }
 
@@ -78,7 +91,7 @@ class BorgerdkMicroarticleController extends BorgerdkAbstractEntityController {
         0 => array('#markup' => $entity->content)
       ) + $default;
 
-    $selfservice_link_entities = borgerdk_selfservice_load_multiple(FALSE, array('microarticle_id' => $entity->entity_id));
+    $selfservice_link_entities = borgerdk_selfservice_load_multiple_sorted(FALSE, array('microarticle_id' => $entity->entity_id));
     if (!(empty($selfservice_link_entities))) {
       if ($view_mode == 'teaser') {
         $content['selfservices'] = array(

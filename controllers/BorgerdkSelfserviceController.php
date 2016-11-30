@@ -25,8 +25,21 @@ class BorgerdkSelfserviceController extends BorgerdkAbstractEntityController {
     }
 
     //if microarticle_id is 0 set it to null, to keep the data consistent
-    if (isset($entity->microarticle_id) && $entity->microarticle_id == 0) {
+    if (isset($entity->microarticle_id) && $entity->microarticle_id === 0) {
       $entity->microarticle_id = NULL;
+    }
+
+    // Calculates the weight of the new self-service as the weight of the max + 1;
+    if (!isset($entity->weight)) {
+      $existing_ss = borgerdk_selfservice_load_multiple(FALSE, array('article_id' => $entity->article_id));
+      $max_weight = 0;
+      foreach ($existing_ss as $ss) {
+        if ($ss->weight > $max_weight) {
+          $max_weight = $ss->weight;
+        }
+      }
+      $max_weight++;
+      $entity->weight = $max_weight;
     }
 
     return parent::save($entity, $transaction);

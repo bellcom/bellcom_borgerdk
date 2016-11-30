@@ -112,7 +112,7 @@ function _bellcom_borgedk_admin_get_microarticle_options($form_state, $article_e
 
   if ($article_entity_id) {
     //load microarticles
-    $entities = borgerdk_microarticle_load_multiple(FALSE, array('article_id' => $article_entity_id), TRUE);
+    $entities = borgerdk_microarticle_load_multiple_sorted(FALSE, array('article_id' => $article_entity_id), TRUE);
     foreach ($entities as $entity) {
       $options[$entity->entity_id] = $entity->title;
     }

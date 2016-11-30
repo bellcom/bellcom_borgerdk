@@ -134,6 +134,20 @@ function borgerdk_selfservice_load_multiple($entity_ids = FALSE, $conditions = a
   return entity_load('borgerdk_selfservice', $entity_ids, $conditions, $reset);
 }
 
+/**
+ * Returns the self-service list, sorted by self-service weight
+ *
+ * @param bool $entity_ids
+ * @param array $conditions
+ * @param bool $reset
+ * @return mixed
+ */
+function borgerdk_selfservice_load_multiple_sorted($entity_ids = FALSE, $conditions = array(), $reset = FALSE) {
+  $entities = borgerdk_selfservice_load_multiple($entity_ids, $conditions, $reset);
+  uasort($entities, '_borgerdk_selfservice_sort');
+  return $entities;
+}
+
 function borgerdk_selfservice_save($entity) {
   entity_save('borgerdk_selfservice', $entity);
 }
@@ -159,4 +173,18 @@ function borgerdk_selfservice_access($op, $entity, $account = NULL, $entity_type
     $article = borgerdk_article_load($entity->article_id);
     return borgerdk_article_access($op, $article, $account, 'borgerdk_article');
   }
+}
+
+/**
+ * Helper function to sort self-service by weight
+ *
+ * @param $a
+ * @param $b
+ * @return int
+ */
+function _borgerdk_selfservice_sort($a, $b) {
+  if ($a->weight == $b->weight) {
+    return 0;
+  }
+  return ($a->weight < $b->weight) ? -1 : 1;
 }

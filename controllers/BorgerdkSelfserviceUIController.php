@@ -51,7 +51,7 @@ class BorgerdkSelfserviceUIController extends EntityDefaultUIController {
     $result = $query->execute();
 
     $borgerdk_selfservice_results = !empty($result['borgerdk_selfservice']) ? $result['borgerdk_selfservice'] : array();
-    $borgerdk_selfservice_array = !empty($borgerdk_selfservice_results) ? borgerdk_selfservice_load_multiple(array_keys($borgerdk_selfservice_results)) : array();
+    $borgerdk_selfservice_array = !empty($borgerdk_selfservice_results) ? borgerdk_selfservice_load_multiple_sorted(array_keys($borgerdk_selfservice_results)) : array();
     foreach ($borgerdk_selfservice_array as $entity_id => $ss) {
       $article = borgerdk_article_load($ss->article_id);
       $microarticle = NULL;
