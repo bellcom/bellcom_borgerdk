@@ -42,7 +42,7 @@ abstract class BorgerdkAbstractEntityController extends EntityAPIController {
    */
   protected function generateEntityId($entity) {
     $hash = hash('md5', $entity->article_id . time());
-    $entity_id = substr($hash, 0, 8) . '-' . substr($hash, 8, 4) . '-' . substr($hash, 12, 4) . '-' . substr($hash, 16, 4) . '-' . substr($hash, 20, 12);
+    $entity_id = substr($hash, 0, 8) . '-' . substr($hash, 8, 4) . '-' . substr($hash, 12, 4) . '-' . substr($hash, 16, 4) . '-' . substr($hash, 20, 12) . '-' . $entity->article_id;
     if (!$this->isEntityIdUnique($entity_id)) {
       $entity_id = $this->generateEntityId($entity);
     }
