@@ -112,7 +112,7 @@ class BorgerdkArticleController extends BorgerdkAbstractEntityController {
         '#field_type' => 'text',
         '#items' => array(array('value' => $entity->legislation)),
         '#formatter' => 'text_default',
-        0 => array('#markup' => strip_tags($entity->legislation))
+        0 => array('#markup' => $entity->legislation)
       ) + $default;
 
     $content['recommendation'] = array(
@@ -123,7 +123,7 @@ class BorgerdkArticleController extends BorgerdkAbstractEntityController {
         '#field_type' => 'text',
         '#items' => array(array('value' => $entity->recommendation)),
         '#formatter' => 'text_default',
-        0 => array('#markup' => strip_tags($entity->recommendation))
+        0 => array('#markup' => $entity->recommendation)
       ) + $default;
 
     $content['byline'] = array(
