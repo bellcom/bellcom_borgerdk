@@ -24,6 +24,16 @@ function bellcom_borgedk_article_menu() {
     'type' => MENU_DEFAULT_LOCAL_TASK,
     'weight' => -10,
   );
+  $items[$article_uri . '/edit'] = array(
+    'title' => 'Edit',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('borgerdk_article_form', $article_uri_argument_position),
+    'access callback' => 'entity_access',
+    'access arguments' => array('update', 'borgerdk_article', $article_uri_argument_position),
+    'type' => MENU_LOCAL_TASK,
+    'context' => MENU_CONTEXT_PAGE | MENU_CONTEXT_INLINE,
+    'weight' => 0,
+  );
   $items[$article_uri . '/delete'] = array(
     'title' => 'Delete Borger.dk Article',
     'page callback' => 'drupal_get_form',
@@ -31,7 +41,7 @@ function bellcom_borgedk_article_menu() {
     'access callback' => 'entity_access',
     'access arguments' => array('delete', 'borgerdk_article', $article_uri_argument_position),
     'type' => MENU_LOCAL_TASK,
-    'weight' => 0,
+    'weight' => 1,
   );
 
   return $items;
@@ -93,12 +103,23 @@ function borgerdk_article_delete_multiple($entity_ids) {
 }
 
 function borgerdk_article_access($op, $entity, $account = NULL, $entity_type) {
-  if ($op == 'create') {
-    return user_access('administer borgerdk_article');
+  if (user_access('administer borgerdk_article')) {
+    return TRUE;
   }
+
+  if ($op == 'create') {
+    return user_access("create borgerdk_article", $account);
+  }
+
   if (isset($entity)) {
     $account = isset($account) ? $account : $GLOBALS['user'];
+
     if (user_access("$op borgerdk_article", $account)) {
+      //allow editing only those that we created by user
+      if ($op == 'update' && $entity->uid != $account->uid) {
+        return FALSE;
+      }
+
       return TRUE;
     }
   }

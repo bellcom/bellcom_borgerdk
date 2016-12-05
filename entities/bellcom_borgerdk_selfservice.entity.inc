@@ -165,9 +165,14 @@ function borgerdk_selfservice_delete_revision($revision_id) {
 }
 
 function borgerdk_selfservice_access($op, $entity, $account = NULL, $entity_type) {
-  if ($op == 'create') {
-    return user_access('administer borgerdk_article');
+  if (user_access('administer borgerdk_article')) {
+    return TRUE;
   }
+
+  if ($op == 'create') {
+    return user_access("create borgerdk_article", $account);
+  }
+
   if ($entity) {
     //relay on article access
     $article = borgerdk_article_load($entity->article_id);

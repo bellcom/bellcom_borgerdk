@@ -19,6 +19,29 @@ class BorgerdkArticleController extends BorgerdkAbstractEntityController {
   }
 
   /**
+   * If empty generates the entity id, fills author information
+   * after that delegates to parent save function
+   *
+   * @param $entity
+   * @param DatabaseTransaction $transaction
+   * @return bool|int
+   */
+  public function save($entity, DatabaseTransaction $transaction = NULL){
+    if (isset($entity->is_new) && $entity->is_new && !isset($entity->entity_id)) {
+      $entity->entity_id = $this->generateEntityId($entity);
+      $entity->publishingDate = REQUEST_TIME;
+      $entity->lastUpdated = REQUEST_TIME;
+    }
+
+    if (!isset($entity->uid)) {
+      global $user;
+      $entity->uid = $user->uid;
+    }
+
+    return parent::save($entity, $transaction);
+  }
+
+  /**
    * Builds content overview for full and basic info view_mode
    *
    * @param $entity
@@ -219,6 +242,22 @@ class BorgerdkArticleController extends BorgerdkAbstractEntityController {
       ) + $default;
 
     return parent::buildContent($entity, $view_mode, $langcode, $content);
+  }
+
+  /**
+   * Generates an unique random entity ID
+   *
+   * @param $entity
+   * @return string
+   */
+  protected function generateEntityId($entity) {
+    $hash = crc32(time());
+    $entity_id = substr(abs($hash), 0, 5);
+
+    if (!$this->isEntityIdUnique($entity_id)) {
+      $entity_id = $this->generateEntityId($entity);
+    }
+    return $entity_id;
   }
 
   /**

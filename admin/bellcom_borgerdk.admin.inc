@@ -40,7 +40,7 @@ function bellcom_borgerdk_settings_form_submit($form, $form_state) {
 
   //if selected municipality changed = schedule all articles for resynch
   if (variable_get('bellcom_borgerdk_selected_municipality') != $values['bellcom_borgerdk_selected_municipality']) {
-    $articles_to_resynch = borgerdk_article_load_multiple(FALSE, array('resynch' => 0));
+    $articles_to_resynch = borgerdk_article_load_multiple(FALSE, array('resynch' => 0, 'uid' => 0));
     foreach ($articles_to_resynch as $article) {
       $article->scheduleForResynch();
     }

@@ -26,6 +26,8 @@ class BorgerdkArticleUIController extends EntityDefaultUIController {
       'articleUrl' => array('data' => t('Article URL')),
       'publishingDate' => array('data' => t('Publishing Date'), 'type' => 'property', 'specifier' => 'publishingDate'),
       'lastUpdated' => array('data' => t('Last Updated'), 'type' => 'property', 'specifier' => 'lastUpdated'),
+      'author' => array('data' => t('Author'), 'type' => 'property', 'specifier' => 'uid'),
+      'edit' => array('data' => t('Edit')),
       'delete' => array('data' => t('Delete'))
     );
 
@@ -48,12 +50,15 @@ class BorgerdkArticleUIController extends EntityDefaultUIController {
     $options = array();
     foreach ($borgerdk_article_array as $entity_id => $article) {
       $entity_path = entity_uri('borgerdk_article', $article)['path'];
+      $author = user_load($article->uid);
 
       $options[$entity_id] = array(
-        'title' => ($article->resynch)? '<i>' . l($article->title, $entity_path) . '</i> *' : l($article->title, $entity_path),
+        'title' => ($article->resynch) ? '<i>' . l($article->title, $entity_path) . '</i> *' : l($article->title, $entity_path),
         'articleUrl' => l($article->articleUrl, $article->articleUrl, array('attributes' => array('target' => '_blank'))),
         'publishingDate' => format_date($article->publishingDate),
         'lastUpdated' => format_date($article->lastUpdated),
+        'author' => ($author->uid) ? theme('username', array('account' => $author)) : 'Borger.dk',
+        'edit' => ($author->uid) ? l(t('Edit'), "$entity_path/edit", array('query' => array('destination' => entity_get_info('borgerdk_article')['admin ui']['path']))) : '',
         'delete' =>
           l(t('Delete'), "$entity_path/delete", array('query' => array('destination' => entity_get_info('borgerdk_article')['admin ui']['path']))),
       );

@@ -38,14 +38,14 @@ function bellcom_borgerdk_schema() {
         'description' => 'A header for the item, taken from Borger.dk',
         'type' => 'varchar',
         'length' => 255,
-        'not null' => TRUE,
+        'not null' => FALSE,
         'default' => '',
       ),
       'articleUrl' => array(
         'description' => 'The URL of the article, taken from Borger.dk',
         'type' => 'varchar',
         'length' => 255,
-        'not null' => TRUE,
+        'not null' => FALSE,
         'default' => '',
       ),
       'legislation' => array(
@@ -81,6 +81,12 @@ function bellcom_borgerdk_schema() {
         'not null' => TRUE,
         'default' => 0,
         'size' => 'tiny',
+      ),
+      'uid' => array(
+        'description' => 'Author uid of this article, 0 if imported automatically',
+        'type' => 'int',
+        'not null' => TRUE,
+        'default' => 0,
       ),
       'changed' => array(
         'description' => 'The Unix timestamp of the entity changed time.',
