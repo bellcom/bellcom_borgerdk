@@ -26,7 +26,7 @@ class BorgerdkArticleController extends BorgerdkAbstractEntityController {
    * @param DatabaseTransaction $transaction
    * @return bool|int
    */
-  public function save($entity, DatabaseTransaction $transaction = NULL){
+  public function save($entity, DatabaseTransaction $transaction = NULL) {
     if (isset($entity->is_new) && $entity->is_new && !isset($entity->entity_id)) {
       $entity->entity_id = $this->generateEntityId($entity);
       $entity->publishingDate = REQUEST_TIME;
@@ -82,6 +82,7 @@ class BorgerdkArticleController extends BorgerdkAbstractEntityController {
         0 => array('#markup' => check_plain($entity->title))
       ) + $default;
 
+    if ($entity->header) {
     $content['header'] = array(
         '#theme' => 'field',
         '#weight' => $weight++,
@@ -92,7 +93,9 @@ class BorgerdkArticleController extends BorgerdkAbstractEntityController {
         '#formatter' => 'text_default',
         0 => array('#markup' => check_plain($entity->header))
       ) + $default;
+    }
 
+    if ($entity->articleUrl) {
     $content['articleUrl'] = array(
         '#theme' => 'field',
         '#weight' => $weight++,
@@ -103,39 +106,46 @@ class BorgerdkArticleController extends BorgerdkAbstractEntityController {
         '#formatter' => 'text_default',
         0 => array('#markup' => l($entity->articleUrl, $entity->articleUrl, array('attributes' => array('target' => '_blank'))))
       ) + $default;
+    }
 
-    $content['legislation'] = array(
-        '#theme' => 'field',
-        '#weight' => $weight++,
-        '#title' => t('Legislation'),
-        '#field_name' => 'legislation',
-        '#field_type' => 'text',
-        '#items' => array(array('value' => $entity->legislation)),
-        '#formatter' => 'text_default',
-        0 => array('#markup' => $entity->legislation)
-      ) + $default;
+    if ($entity->legislation) {
+      $content['legislation'] = array(
+          '#theme' => 'field',
+          '#weight' => $weight++,
+          '#title' => t('Legislation'),
+          '#field_name' => 'legislation',
+          '#field_type' => 'text',
+          '#items' => array(array('value' => $entity->legislation)),
+          '#formatter' => 'text_default',
+          0 => array('#markup' => $entity->legislation)
+        ) + $default;
+    }
 
-    $content['recommendation'] = array(
-        '#theme' => 'field',
-        '#weight' => $weight++,
-        '#title' => t('Recommendation'),
-        '#field_name' => 'recommendation',
-        '#field_type' => 'text',
-        '#items' => array(array('value' => $entity->recommendation)),
-        '#formatter' => 'text_default',
-        0 => array('#markup' => $entity->recommendation)
-      ) + $default;
+    if ($entity->recommendation) {
+      $content['recommendation'] = array(
+          '#theme' => 'field',
+          '#weight' => $weight++,
+          '#title' => t('Recommendation'),
+          '#field_name' => 'recommendation',
+          '#field_type' => 'text',
+          '#items' => array(array('value' => $entity->recommendation)),
+          '#formatter' => 'text_default',
+          0 => array('#markup' => $entity->recommendation)
+        ) + $default;
+    }
 
-    $content['byline'] = array(
-        '#theme' => 'field',
-        '#weight' => $weight++,
-        '#title' => t('Byline'),
-        '#field_name' => 'byline',
-        '#field_type' => 'text',
-        '#items' => array(array('value' => $entity->byline)),
-        '#formatter' => 'text_default',
-        0 => array('#markup' => check_plain($entity->byline))
-      ) + $default;
+    if ($content['byline']) {
+      $content['byline'] = array(
+          '#theme' => 'field',
+          '#weight' => $weight++,
+          '#title' => t('Byline'),
+          '#field_name' => 'byline',
+          '#field_type' => 'text',
+          '#items' => array(array('value' => $entity->byline)),
+          '#formatter' => 'text_default',
+          0 => array('#markup' => check_plain($entity->byline))
+        ) + $default;
+    }
 
     $microarticle_entities = borgerdk_microarticle_load_multiple_sorted(FALSE, array('article_id' => $entity->entity_id));
     if (!empty($microarticle_entities)) {
