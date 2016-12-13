@@ -161,7 +161,15 @@ class BorgerdkMicroarticleController extends BorgerdkAbstractEntityController {
       }
     }
 
-    return parent::buildContent($entity, $view_mode, $langcode, $content);
+    // Turns out, $entity->content is a reserved field, used internally for building and so when calling parent::buildContent
+    // entity->content is first being overwritten and then unset.
+    // That causes problems if the same node rendered multiple time per page, bit instead of fetching fresh node state
+    // from DB per each request, we do a trick with saving $entity->content and then setting it again.
+    $cache_content = $entity->content;
+    $to_return = parent::buildContent($entity, $view_mode, $langcode, $content);
+    $entity->content = $cache_content;
+
+    return $to_return;
   }
 
   /**
