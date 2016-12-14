@@ -31,7 +31,10 @@ function bellcom_borgerdk_fetch_articles() {
       //updating the values. Resynch flag is added automatically
       $entity_article = bellcom_borgerdk_article_map($entity_article, $article);
 
-      borgerdk_article_save($entity_article);
+      //only saving properly formatted articles
+      if ($entity_article->title) {
+        borgerdk_article_save($entity_article);
+      }
     }
     elseif (strtotime($article->lastUpdated) > $exisiting_articles[$id]->lastUpdated) {
       //updating the values and adding flag for resynch
