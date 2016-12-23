@@ -21,6 +21,10 @@ function bellcom_borgerdk_field_widget_info() {
     'borgerdk_article_widget' => array(
       'label' => t('Borger.dk article'),
       'field types' => array('borgerdk_article_field'),
+      'behaviors' => array(
+        'multiple values' => FIELD_BEHAVIOR_DEFAULT,
+        'default value' => FIELD_BEHAVIOR_NONE,
+      ),
     ),
   );
 }
@@ -170,7 +174,7 @@ function bellcom_borgerdk_field_presave($entity_type, $entity, $field, $instance
   foreach ($items as $delta => $item) {
     if (isset($item['borgerdk_article_field']['borgerdk_article_entity_id'])) {
       if ($item['borgerdk_article_field']['borgerdk_article_entity_id'] == -1) {
-        //nothing is selected, delete lement with this delta
+        //nothing is selected, delete element with this delta
         unset($items[$delta]);
       }
       else {
