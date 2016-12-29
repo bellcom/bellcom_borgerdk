@@ -11,17 +11,24 @@ module_load_include('inc', 'bellcom_borgerdk', 'includes/bellcom_borgerdk.mapper
  * Fetches the information about the articles (except the content) and creates/updates the database entry.
  * If the article is new or outdated it is marked with a 'resynch' flag.
  */
-function bellcom_borgerdk_fetch_articles() {
-  $client = new BorgerDkClient();
+function bellcom_borgerdk_fetch_articles($lang = 'da') {
+  //fetching lang specific articles
+  $client = new BorgerDkClient($lang);
   $articles = new GetAllArticles($client);
   $articles = $articles->getResultFormatted();
 
-  $exisiting_articles = borgerdk_article_load_multiple(array_keys($articles));
+  //adding lang suffix
+  $exisiting_articles_keys = array_keys($articles);
+  foreach ($exisiting_articles_keys as &$k) {
+    $k .= "-$lang";
+  }
+
+  $exisiting_articles = borgerdk_article_load_multiple($exisiting_articles_keys);
 
   foreach ($articles as $id => $article) {
     $entity_article = NULL;
-    if (array_key_exists($id, $exisiting_articles)) {
-      $entity_article = $exisiting_articles[$id];
+    if (array_key_exists("$id-$lang", $exisiting_articles)) {
+      $entity_article = $exisiting_articles["$id-$lang"];
     }
 
     //article info is missing in the database
@@ -30,15 +37,18 @@ function bellcom_borgerdk_fetch_articles() {
 
       //updating the values. Resynch flag is added automatically
       $entity_article = bellcom_borgerdk_article_map($entity_article, $article);
+      $entity_article->entity_id .= "-$lang";
+      $entity_article->lang = $lang;
 
       //only saving properly formatted articles
       if ($entity_article->title) {
         borgerdk_article_save($entity_article);
       }
     }
-    elseif (strtotime($article->lastUpdated) > $exisiting_articles[$id]->lastUpdated) {
+    elseif (strtotime($article->lastUpdated) > $exisiting_articles["$id-$lang"]->lastUpdated) {
       //updating the values and adding flag for resynch
       $entity_article = bellcom_borgerdk_article_map($entity_article, $article);
+      $entity_article->entity_id .= "-$lang";
       $entity_article->resynch = 1;
 
       borgerdk_article_save($entity_article);
@@ -50,8 +60,8 @@ function bellcom_borgerdk_fetch_articles() {
  * Loads the articles the need to be resynched.
  * @return array of borgerdk_article entities.
  */
-function bellcom_borgedk_get_resynch_articles() {
-  return borgerdk_article_load_multiple(FALSE, array('resynch' => 1));
+function bellcom_borgedk_get_resynch_articles($lang = 'da') {
+  return borgerdk_article_load_multiple(FALSE, array('resynch' => 1, 'lang' => $lang));
 }
 
 /**
@@ -60,11 +70,22 @@ function bellcom_borgedk_get_resynch_articles() {
  *
  * After an update 'resynch' flag is removed each borgerdk_article entity.
  *
- * @param $items
+ * @param $chunk
  */
-function bellcom_borgerdk_queue_worker($items) {
-  $client = new BorgerDkClient();
-  $params = array('articleIDs' => array_keys($items));
+function bellcom_borgerdk_queue_worker($chunk) {
+  //extracting info from chunk
+  $lang = $chunk['lang'];
+  $items = $chunk['items'];
+
+  //getting lang specific articles
+  $client = new BorgerDkClient($lang);
+
+  //removing lang suffix to perform webservice search
+  $chunk_article_ids = array_keys($items);
+  foreach ($chunk_article_ids as &$k) {
+    $k = str_replace("-$lang",'', $k);
+  }
+  $params = array('articleIDs' => $chunk_article_ids);
   if (variable_get('bellcom_borgerdk_selected_municipality')) {
     $params['municipalityCode'] = variable_get('bellcom_borgerdk_selected_municipality');
   }
@@ -96,15 +117,16 @@ function bellcom_borgerdk_queue_worker($items) {
       continue;
     }
 
-    $entity_article = $existing_articles[$article->id];
+    $entity_article = $existing_articles["$article->id-$lang"];
     if (!$entity_article) {
       watchdog('Bellcom Borger.dk', 'Ignoring article ID: %id. Article does not exist, try fetching it first',
         array('%id' => $article->id), WATCHDOG_WARNING);
       continue;
     }
 
-    //updating the values. Removing resynch flag
+    //updating the article values
     $entity_article = bellcom_borgerdk_article_map($entity_article, $article);
+    $entity_article->entity_id .= "-$lang";
 
     //updating microarticles
     $article_microarticles = array();
