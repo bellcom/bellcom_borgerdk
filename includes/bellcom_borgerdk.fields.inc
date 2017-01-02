@@ -73,7 +73,7 @@ function bellcom_borgerdk_field_widget_form(&$form, &$form_state, $field, $insta
           'callback' => 'bellcom_borgerdk_reload_article_info',
           'delta' => $delta
         ),
-        '#required' => TRUE,
+        //'#required' => TRUE,
         '#empty_value' => -1
       );
 
