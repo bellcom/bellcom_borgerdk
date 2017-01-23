@@ -18,6 +18,7 @@ function borgerdk_selfservice_form($form, &$form_state, $selfservice = NULL) {
   $form['label'] = array(
     '#title' => t('Label'),
     '#type' => 'textfield',
+    '#required' => TRUE,
     '#size' => 50,
   );
 
