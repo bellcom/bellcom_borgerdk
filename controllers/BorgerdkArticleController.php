@@ -261,7 +261,7 @@ class BorgerdkArticleController extends BorgerdkAbstractEntityController {
    * @return string
    */
   protected function generateEntityId($entity) {
-    $hash = crc32(time());
+    $hash = crc32(microtime());
     $entity_id = substr(abs($hash), 0, 5);
 
     if (!$this->isEntityIdUnique($entity_id)) {
