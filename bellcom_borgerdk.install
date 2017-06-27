@@ -24,7 +24,8 @@ function bellcom_borgerdk_schema() {
     'fields' => array(
       'entity_id' => array(
         'description' => 'Primary key and id, taken from Borger.dk',
-        'type' => 'int',
+        'type' => 'varchar',
+        'length' => 50,
         'not null' => TRUE,
       ),
       'title' => array(
@@ -100,6 +101,13 @@ function bellcom_borgerdk_schema() {
         'not null' => TRUE,
         'default' => 0,
       ),
+      'lang' => array(
+        'description' => 'Language field, indicated whether the entity is from Danish or English version of Borger.dk',
+        'type' => 'char',
+        'length' => 2,
+        'not null' => TRUE,
+        'default' => 'da'
+      )
     ),
     'primary key' => array('entity_id'),
   );
@@ -140,7 +148,8 @@ function bellcom_borgerdk_schema() {
       ),
       'article_id' => array(
         'description' => 'Foreign key to borgerdk_article entity_id',
-        'type' => 'int',
+        'type' => 'varchar',
+        'length' => 50,
       ),
       'uid' => array(
         'description' => 'Author uid of this microarticle, 0 if imported automatically',
@@ -225,7 +234,8 @@ function bellcom_borgerdk_schema() {
       ),
       'article_id' => array(
         'description' => 'Foreign key to borgerdk_article entity_id',
-        'type' => 'int',
+        'type' => 'varchar',
+        'length' => 50,
       ),
       'microarticle_id' => array(
         'description' => 'Foreign key to borgerdk_microarticle entity_id',
@@ -279,7 +289,9 @@ function bellcom_borgerdk_field_schema($field) {
   return array(
     'columns' => array(
       'borgerdk_article_entity_id' => array(
-        'type' => 'int',
+        'description' => 'Primary key and id, taken from Borger.dk',
+        'type' => 'varchar',
+        'length' => 50,
         'not null' => TRUE,
       ),
       'borgerdk_microarticle_entity_ids' => array(
@@ -309,6 +321,99 @@ function bellcom_borgerdk_update_7101() {
           db_change_field($table_name, $column_name, $column_name, array(
             'type' => 'int',
           ));
+        }
+      }
+    }
+  }
+}
+
+/**
+ * Updates the borger.dk structure to have the lang prefix in article entity ids.
+ *
+ */
+function bellcom_borgerdk_update_7102() {
+  //adding new lang field
+  db_add_field('borgerdk_article', 'lang', array(
+    'description' => 'Language field, indicated whether the entity is from Danish or English version of Borger.dk',
+    'type' => 'char',
+    'length' => 2,
+    'not null' => TRUE,
+    'default' => 'da'
+  ));
+
+  //changing field's type to varchar
+  db_change_field('borgerdk_article', 'entity_id', 'entity_id', array(
+    'description' => 'Primary key and id, taken from Borger.dk',
+    'type' => 'varchar',
+    'length' => 50,
+    'not null' => TRUE,
+  ));
+  db_change_field('borgerdk_microarticle', 'article_id', 'article_id', array(
+    'description' => 'Foreign key to borgerdk_article entity_id',
+    'type' => 'varchar',
+    'length' => 50,
+  ));
+  db_change_field('borgerdk_microarticle_revision', 'article_id', 'article_id', array(
+    'description' => 'Foreign key to borgerdk_article entity_id',
+    'type' => 'varchar',
+    'length' => 50,
+  ));
+  db_change_field('borgerdk_selfservice', 'article_id', 'article_id', array(
+    'description' => 'Foreign key to borgerdk_article entity_id',
+    'type' => 'varchar',
+    'length' => 50,
+  ));
+  db_change_field('borgerdk_selfservice_revision', 'article_id', 'article_id', array(
+    'description' => 'Foreign key to borgerdk_article entity_id',
+    'type' => 'varchar',
+    'length' => 50,
+  ));
+
+  //adding lang suffix to existing articles, it's safe to assume that all existing articles are Danish
+  db_query("UPDATE {borgerdk_article} SET entity_id = CONCAT(entity_id, '-da')");
+  db_query("UPDATE {borgerdk_microarticle} SET article_id = CONCAT(article_id, '-da')");
+  db_query("UPDATE {borgerdk_microarticle_revision} SET article_id = CONCAT(article_id, '-da')");
+  db_query("UPDATE {borgerdk_selfservice} SET article_id = CONCAT(article_id, '-da')");
+  db_query("UPDATE {borgerdk_selfservice_revision} SET article_id = CONCAT(article_id, '-da')");
+
+  //updating existing field types
+  $fields = field_info_fields();
+  foreach ($fields as $field_name => $field) {
+    if ($field['type'] == 'borgerdk_article_field' && $field['storage']['type'] == 'field_sql_storage') {
+      foreach ($field['storage']['details']['sql'] as $type => $table_info) {
+        foreach ($table_info as $table_name => $columns) {
+          $column_name = _field_sql_storage_columnname($field_name, 'borgerdk_article_entity_id');
+          db_change_field($table_name, $column_name, $column_name, array(
+            'description' => 'Primary key and id, taken from Borger.dk',
+            'type' => 'varchar',
+            'length' => 50,
+            'not null' => TRUE,
+          ));
+        }
+      }
+    }
+  }
+
+  //updating all article reference fields
+  $fields = field_read_fields(array('type' => 'borgerdk_article_field'));
+  foreach ($fields as $field) {
+    $field_instances = field_read_instances(array('field_id' => $field['id']));
+    foreach ($field_instances as $field_instance) {
+      $query = new EntityFieldQuery();
+      $query->entityCondition('entity_type', $field_instance['entity_type'])
+        ->entityCondition('bundle', $field_instance['bundle'])
+        ->fieldCondition($field_instance['field_name'], 'borgerdk_article_entity_id', 'NULL', '!=');
+
+      $result = $query->execute();
+      if (isset($result['node'])) {
+        $nids = array_keys($result['node']);
+        $nodes = entity_load('node', $nids);
+
+        foreach ($nodes as $node) {
+          foreach ($node->{$field_instance['field_name']}['und'] as $delta => $node_field) {
+            $node->{$field_instance['field_name']}['und'][$delta]['borgerdk_article_entity_id'] = $node_field['borgerdk_article_entity_id'] . '-da';
+          }
+          node_save($node);
         }
       }
     }

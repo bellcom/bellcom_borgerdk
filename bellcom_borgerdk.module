@@ -61,16 +61,26 @@ function bellcom_borgerdk_cron() {
   }
   else {
     try {
-      bellcom_borgerdk_fetch_articles();
-      $articles = bellcom_borgedk_get_resynch_articles();
+      bellcom_borgerdk_fetch_articles('da');
+      bellcom_borgerdk_fetch_articles('en');
 
       // Maximum N articles to process.
-      $chunks = array_chunk($articles, BELLCOM_BORGERDK_QUEUE_CHUNK_SIZE, TRUE);
+      $articles_da = bellcom_borgedk_get_resynch_articles('da');
+      $chunks = array_chunk($articles_da, BELLCOM_BORGERDK_QUEUE_CHUNK_SIZE, TRUE);
       foreach ($chunks as $chunk) {
-        $queue->createItem($chunk);
+        $queue->createItem(array('lang' => 'da', 'items' => $chunk));
       }
+
+      // Maximum N articles to process.
+      $articles_en = bellcom_borgedk_get_resynch_articles('en');
+      $chunks = array_chunk($articles_en, BELLCOM_BORGERDK_QUEUE_CHUNK_SIZE, TRUE);
+      foreach ($chunks as $chunk) {
+        $queue->createItem(array('lang' => 'en', 'items' => $chunk));
+      }
+
       watchdog('Bellcom Borger.dk', 'Borger article queue created (@cnt articles pending update).',
-        array('@cnt' => count($articles)));
+        array('@cnt' => count($articles_da)+count($articles_en)));
+
     } catch (Exception $e) {
       watchdog('Bellcom Borger.dk', $e->getMessage(), WATCHDOG_ERROR);
     }

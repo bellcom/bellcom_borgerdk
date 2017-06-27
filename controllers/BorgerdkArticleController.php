@@ -134,7 +134,7 @@ class BorgerdkArticleController extends BorgerdkAbstractEntityController {
         ) + $default;
     }
 
-    if ($content['byline']) {
+    if ($entity->byline) {
       $content['byline'] = array(
           '#theme' => 'field',
           '#weight' => $weight++,
