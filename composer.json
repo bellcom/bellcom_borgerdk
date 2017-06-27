@@ -1,5 +1,12 @@
 {
+    "repositories": [
+        {
+            "type": "vcs",
+            "url":  "git@github.com:bellcom/borgerdk-php.git"
+        }
+    ],
     "require": {
-        "ffwagency/borgerdk-php": ">=1.0.0"
-    }
+        "ffwagency/borgerdk-php": "dev-os2borger-15"
+    },
+    "minimum-stability": "dev"
 }
