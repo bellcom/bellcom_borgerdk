@@ -9,6 +9,8 @@ print('==========================' . PHP_EOL);
 print('Started bellcom_borgerdk.cron.php' . PHP_EOL);
 print('==========================' . PHP_EOL);
 
+$queue = DrupalQueue::get(BELLCOM_BORGERDK_QUEUE);
+$queue->deleteQueue();
 
 print('Filling the queue' . PHP_EOL);
 bellcom_borgerdk_cron();
