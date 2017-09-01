@@ -126,19 +126,20 @@ function bellcom_borgerdk_queue_worker($chunk) {
 
     //updating the article values
     $entity_article = bellcom_borgerdk_article_map($entity_article, $article);
+    $original_article_entity_id = $entity_article->entity_id;
     $entity_article->entity_id .= "-$lang";
 
     //updating microarticles
     $article_microarticles = array();
     foreach ($article->microArticles as $microarticle) {
-      $entity_ma = borgerdk_microarticle_load($microarticle->id . '-' . $entity_article->entity_id);
+      $entity_ma = borgerdk_microarticle_load($microarticle->id . '-' . $original_article_entity_id);
       if (!$entity_ma) {
         $entity_ma = entity_create('borgerdk_microarticle', array());
       }
 
       $entity_ma = bellcom_borgerdk_microarticle_map($entity_ma, $microarticle);
       $entity_ma->article_id = $entity_article->entity_id;
-      $entity_ma->entity_id .= '-' . $entity_article->entity_id;
+      $entity_ma->entity_id .= '-' . $original_article_entity_id;
       borgerdk_microarticle_save($entity_ma);
 
       //saving microarticles to quickly find if any selfservice is related with it
@@ -147,7 +148,7 @@ function bellcom_borgerdk_queue_worker($chunk) {
 
     //updating self-sevice links
     foreach ($article->selfServiceLinks as $selfservice) {
-      $entity_ss = borgerdk_selfservice_load($selfservice->id . '-' . $entity_article->entity_id);
+      $entity_ss = borgerdk_selfservice_load($selfservice->id . '-' . $original_article_entity_id);
 
       if (!$entity_ss) {
         $entity_ss = entity_create('borgerdk_selfservice', array());
@@ -155,7 +156,7 @@ function bellcom_borgerdk_queue_worker($chunk) {
 
       $entity_ss = bellcom_borgerdk_selfservice_map($entity_ss, $selfservice);
       $entity_ss->article_id = $entity_article->entity_id;
-      $entity_ss->entity_id .= '-' . $entity_article->entity_id;
+      $entity_ss->entity_id .= '-' . $original_article_entity_id;
 
       //check if we have a microarticle with the similar title
       $related_ma_name = preg_replace('/(Start\s)/i', '', $entity_ss->title);
