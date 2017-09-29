@@ -140,7 +140,13 @@ function bellcom_borgerdk_queue_worker($chunk) {
       $entity_ma = bellcom_borgerdk_microarticle_map($entity_ma, $microarticle);
       $entity_ma->article_id = $entity_article->entity_id;
       $entity_ma->entity_id .= '-' . $original_article_entity_id;
-      borgerdk_microarticle_save($entity_ma);
+      try {
+        borgerdk_microarticle_save($entity_ma);
+      } catch (Exception $e) {
+        watchdog('Bellcom Borger.dk', 'Ignoring microarticle ID: %id. Error: %error',
+          array('%id' => $entity_ma->entity_id, '%error' => $e->getMessage()), WATCHDOG_ERROR);
+        continue;
+      }
 
       //saving microarticles to quickly find if any selfservice is related with it
       $article_microarticles[$entity_ma->title] = $entity_ma;
@@ -164,7 +170,13 @@ function bellcom_borgerdk_queue_worker($chunk) {
         $related_microarticle = $article_microarticles[$related_ma_name];
         $entity_ss->microarticle_id = $related_microarticle->entity_id;
       }
-      borgerdk_selfservice_save($entity_ss);
+      try {
+        borgerdk_selfservice_save($entity_ss);
+      } catch (Exception $e) {
+        watchdog('Bellcom Borger.dk', 'Ignoring selfservice ID: %id. Error: %error',
+          array('%id' => $entity_ss->entity_id, '%error' => $e->getMessage()), WATCHDOG_ERROR);
+        continue;
+      }
     }
 
     $entity_article->resynch = 0;
