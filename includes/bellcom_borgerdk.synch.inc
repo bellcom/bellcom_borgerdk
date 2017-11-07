@@ -118,6 +118,7 @@ function bellcom_borgerdk_queue_worker($chunk) {
     }
 
     $entity_article = $existing_articles["$article->id-$lang"];
+    unset($existing_articles["$article->id-$lang"]);
     if (!$entity_article) {
       watchdog('Bellcom Borger.dk', 'Ignoring article ID: %id. Article does not exist, try fetching it first',
         array('%id' => $article->id), WATCHDOG_WARNING);
@@ -145,7 +146,6 @@ function bellcom_borgerdk_queue_worker($chunk) {
       } catch (Exception $e) {
         watchdog('Bellcom Borger.dk', 'Ignoring microarticle ID: %id. Error: %error',
           array('%id' => $entity_ma->entity_id, '%error' => $e->getMessage()), WATCHDOG_ERROR);
-        continue;
       }
 
       //saving microarticles to quickly find if any selfservice is related with it
@@ -175,10 +175,16 @@ function bellcom_borgerdk_queue_worker($chunk) {
       } catch (Exception $e) {
         watchdog('Bellcom Borger.dk', 'Ignoring selfservice ID: %id. Error: %error',
           array('%id' => $entity_ss->entity_id, '%error' => $e->getMessage()), WATCHDOG_ERROR);
-        continue;
       }
     }
 
+    $entity_article->resynch = 0;
+    borgerdk_article_save($entity_article);
+  }
+
+  //in case there are still some articles left (meaning the were deleted from Borger.dk)
+  //do not attempt to synch them
+  foreach ($existing_articles as $entity_article) {
     $entity_article->resynch = 0;
     borgerdk_article_save($entity_article);
   }

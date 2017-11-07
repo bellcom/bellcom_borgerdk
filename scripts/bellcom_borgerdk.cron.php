@@ -16,14 +16,15 @@ $queue = DrupalQueue::get(BELLCOM_BORGERDK_QUEUE);
 print('Total number of items in queue: ' . $queue->numberOfItems() * BELLCOM_BORGERDK_QUEUE_CHUNK_SIZE . PHP_EOL);
 $total_chunks = $queue->numberOfItems();
 $current_item = 1;
-while ($queue->numberOfItems() > 0 && $current_item <= $queue->numberOfItems()) {
+$startingNumber = $queue->numberOfItems();
+while ($queue->numberOfItems() > 0 && $current_item <= $startingNumber) {
   print('Processing chunk : ' . $current_item . '/' . $total_chunks . PHP_EOL);
   $chunk = $queue->claimItem();
   if ($chunk) {
     $items = $chunk->data;
     if (is_array($items)) {
       try {
-        print('Article IDs to process: ' . implode(', ', array_keys($chunk->data)) . PHP_EOL);
+        print('Article IDs to process: ' . implode(', ', array_keys($chunk->data['items'])) . PHP_EOL);
         bellcom_borgerdk_queue_worker($chunk->data);
       } catch (Exception $e){
         print('Error! Ignoring chunk. Exception: ' . $e->getMessage());
