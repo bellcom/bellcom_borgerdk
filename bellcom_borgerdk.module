@@ -140,3 +140,15 @@ function bellcom_borgerdk_permission() {
 
   return $permissions;
 }
+
+/**
+ * Implements hook_mail()
+ *
+ * @param $key
+ * @param $message
+ * @param $params
+ */
+function bellcom_borgerdk_mail($key, &$message, $params) {
+  $message['subject'] = $params['subject'];
+  $message['body'][] = $params['body'];
+}

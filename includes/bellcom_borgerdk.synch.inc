@@ -6,6 +6,7 @@ use BorgerDk\ArticleService\Resources\Endpoints\GetArticlesByIDs;
 use BorgerDk\ArticleService\Resources\Endpoints\GetMunicipalityList;
 
 module_load_include('inc', 'bellcom_borgerdk', 'includes/bellcom_borgerdk.mapper');
+module_load_include('inc', 'bellcom_borgerdk', 'includes/bellcom_borgerdk.reminder');
 
 /**
  * Fetches the information about the articles (except the content) and creates/updates the database entry.
@@ -24,6 +25,7 @@ function bellcom_borgerdk_fetch_articles($lang = 'da') {
   }
 
   $exisiting_articles = borgerdk_article_load_multiple($exisiting_articles_keys);
+  $articles_to_delete = borgerdk_article_load_multiple(FALSE, array('uid' => 0, 'lang' => $lang));
 
   foreach ($articles as $id => $article) {
     $entity_article = NULL;
@@ -52,6 +54,23 @@ function bellcom_borgerdk_fetch_articles($lang = 'da') {
       $entity_article->resynch = 1;
 
       borgerdk_article_save($entity_article);
+    }
+
+    //if article is still present, we don't want to remove it
+    unset($articles_to_delete["$id-$lang"]);
+  }
+
+  // Notify about each article being removed from the source feed.
+  foreach($articles_to_delete as $article_to_delete) {
+    $affected_nodes = bellcom_borgerdk_reminder_get_affected_nodes($article_to_delete);
+
+    //if there is no affected nodes, it is safe to delete the article
+    if (empty($affected_nodes)) {
+      borgerdk_article_delete($article_to_delete);
+    } else {
+      if (variable_get('bellcom_borgerdk_reminder_email_enabled')) {
+        bellcom_borgerdk_reminder_send_email($article_to_delete, $affected_nodes);
+      }
     }
   }
 }
