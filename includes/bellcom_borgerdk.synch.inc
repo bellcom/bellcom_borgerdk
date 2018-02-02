@@ -130,8 +130,12 @@ function bellcom_borgerdk_queue_worker($chunk) {
     $original_article_entity_id = $entity_article->entity_id;
     $entity_article->entity_id .= "-$lang";
 
+    //getting previously imported microarticles
+    $microarticles_to_delete = borgerdk_microarticle_load_multiple_sorted(FALSE, array('article_id' => $entity_article->entity_id, 'uid' => 0), TRUE);
+
     //updating microarticles
     $article_microarticles = array();
+    $weight = 0;
     foreach ($article->microArticles as $microarticle) {
       $entity_ma = borgerdk_microarticle_load($microarticle->id . '-' . $original_article_entity_id);
       if (!$entity_ma) {
@@ -141,8 +145,10 @@ function bellcom_borgerdk_queue_worker($chunk) {
       $entity_ma = bellcom_borgerdk_microarticle_map($entity_ma, $microarticle);
       $entity_ma->article_id = $entity_article->entity_id;
       $entity_ma->entity_id .= '-' . $original_article_entity_id;
+      $entity_ma->weight = $weight;
       try {
         borgerdk_microarticle_save($entity_ma);
+        $weight++;
       } catch (Exception $e) {
         watchdog('Bellcom Borger.dk', 'Ignoring microarticle ID: %id. Error: %error',
           array('%id' => $entity_ma->entity_id, '%error' => $e->getMessage()), WATCHDOG_ERROR);
@@ -150,9 +156,20 @@ function bellcom_borgerdk_queue_worker($chunk) {
 
       //saving microarticles to quickly find if any selfservice is related with it
       $article_microarticles[$entity_ma->title] = $entity_ma;
+
+      //this microarticle is still present, thus it will not be deleted
+      unset($microarticles_to_delete[$entity_ma->entity_id]);
     }
 
+    // Remove the microarticles that do not exist anymore
+    borgerdk_microarticle_delete_multiple(array_keys($microarticles_to_delete));
+    unset($microarticles_to_delete);
+
+    //getting previously imported selfservices
+    $selfservices_to_delete = borgerdk_selfservice_load_multiple(FALSE, array('article_id' => $entity_article->entity_id, 'uid' => 0), TRUE);
+
     //updating self-sevice links
+    $weight = 0;
     foreach ($article->selfServiceLinks as $selfservice) {
       $entity_ss = borgerdk_selfservice_load($selfservice->id . '-' . $original_article_entity_id);
 
@@ -163,6 +180,7 @@ function bellcom_borgerdk_queue_worker($chunk) {
       $entity_ss = bellcom_borgerdk_selfservice_map($entity_ss, $selfservice);
       $entity_ss->article_id = $entity_article->entity_id;
       $entity_ss->entity_id .= '-' . $original_article_entity_id;
+      $entity_ss->weight = $weight;
 
       //check if we have a microarticle with the similar title
       $related_ma_name = preg_replace('/(Start\s)/i', '', $entity_ss->title);
@@ -172,11 +190,19 @@ function bellcom_borgerdk_queue_worker($chunk) {
       }
       try {
         borgerdk_selfservice_save($entity_ss);
+        $weight++;
       } catch (Exception $e) {
         watchdog('Bellcom Borger.dk', 'Ignoring selfservice ID: %id. Error: %error',
           array('%id' => $entity_ss->entity_id, '%error' => $e->getMessage()), WATCHDOG_ERROR);
       }
+
+      //this selfservice is still present, thus it will not be deleted
+      unset($selfservices_to_delete[$entity_ss->entity_id]);
     }
+
+    // Remove the microarticles that do not exist anymore
+    borgerdk_selfservice_delete_multiple(array_keys($selfservices_to_delete));
+    unset($selfservices_to_delete);
 
     $entity_article->resynch = 0;
     borgerdk_article_save($entity_article);

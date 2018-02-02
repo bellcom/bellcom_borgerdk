@@ -14,11 +14,18 @@ class BorgerdkMicroarticleController extends BorgerdkAbstractEntityController {
    * @return bool|int
    */
   public function save($entity, DatabaseTransaction $transaction = NULL) {
-    if (isset($entity->is_new) && $entity->is_new && !isset($entity->entity_id)) {
+    if (!isset($entity->entity_id)) {
       $entity->entity_id = parent::generateEntityId($entity);
     }
+
     global $user;
     $entity->uid = $user->uid;
+
+    if (isset($entity->is_new) && $entity->is_new) {
+      //if we are adding new microarticle, automatically enable it for all nodes, referencing that article
+      $this->addMicroArticleReferences($entity);
+    }
+
     //default setting = creating a new revision if not mentioned otherwise
     if (!isset($entity->is_new_revision)) {
       $entity->is_new_revision = TRUE;
@@ -173,21 +180,110 @@ class BorgerdkMicroarticleController extends BorgerdkAbstractEntityController {
   }
 
   /**
-   * Before deleting the entity itself the content makes all child self-services orphaned.
+   * This function handles calls to removeMicroarticleReferences as well as deletes child self-services.
+   * Then it calls to the parent class to do the actual entity deletion.
    *
    * @param $ids
    * @param DatabaseTransaction $transaction
    */
   public function delete($ids, DatabaseTransaction $transaction = NULL) {
-    //orphaning self-services
-    foreach ($ids as $id) {
-      $selfservices = borgerdk_selfservice_load_multiple(FALSE, array('microarticle_id' => $id), TRUE);
-      foreach ($selfservices as $ss) {
-        $ss->microarticle_id = NULL;
-        borgerdk_selfservice_save($ss);
-      }
+    // Removing microarticle references.
+    $microarticles_to_delete = borgerdk_microarticle_load_multiple($ids);
+    foreach ($microarticles_to_delete as $ma_to_delete) {
+      $this->removeMicroarticleReferences($ma_to_delete);
     }
 
+    // Deleting self-services.
+    foreach ($ids as $id) {
+      $selfservices = borgerdk_selfservice_load_multiple(FALSE, array('microarticle_id' => $id), TRUE);
+      borgerdk_selfservice_delete_multiple(array_keys($selfservices));
+    }
+
+    // Finally letting microarticle to be deleted.
     parent::delete($ids, $transaction);
+  }
+
+  /**
+   * This function adds the microarticle references to the affected nodes.
+   * Affected node is any nodes referencing the article of microarticle.
+   *
+   * @param $microarticle
+   */
+  protected function addMicroArticleReferences($microarticle) {
+    // Getting all fields of type borgerdk_article_field.
+    $fields = field_read_fields(array('type' => 'borgerdk_article_field'));
+    foreach ($fields as $field) {
+      $field_instances = field_read_instances(array('field_id' => $field['id']));
+
+      // Looping through fields to get affected nodes.
+      foreach ($field_instances as $field_instance) {
+        $query = new EntityFieldQuery();
+        $query->entityCondition('entity_type', $field_instance['entity_type'])
+          ->entityCondition('bundle', $field_instance['bundle'])
+          ->fieldCondition($field_instance['field_name'], 'borgerdk_article_entity_id', $microarticle->article_id);
+
+        $result = $query->execute();
+        if (isset($result['node'])) {
+          $nids = array_keys($result['node']);
+          $affected_nodes = entity_load('node', $nids);
+
+          foreach ($affected_nodes as $affected_node) {
+            foreach ($affected_node->{$field_instance['field_name']}['und'] as $delta => $node_field) {
+              $enabled_microarticles = $affected_node->{$field_instance['field_name']}['und'][$delta]['borgerdk_microarticle_entity_ids'];
+              $enabled_microarticles = json_decode($enabled_microarticles);
+
+              // Adding this microarticle
+              $enabled_microarticles[] = $microarticle->entity_id;
+
+              $enabled_microarticles = array_values($enabled_microarticles);
+              $affected_node->{$field_instance['field_name']}['und'][$delta]['borgerdk_microarticle_entity_ids'] = json_encode($enabled_microarticles);
+            }
+            node_save($affected_node);
+          }
+        }
+      }
+    }
+  }
+
+  /**
+   * This function removes the microarticle references from the affected nodes.
+   * Affected node is any nodes referencing the article of microarticle.
+   *
+   * @param $microarticle
+   */
+  protected function removeMicroarticleReferences($microarticle) {
+    // Getting all fields of type borgerdk_article_field.
+    $fields = field_read_fields(array('type' => 'borgerdk_article_field'));
+    foreach ($fields as $field) {
+      $field_instances = field_read_instances(array('field_id' => $field['id']));
+
+      // Looping through fields to get affected nodes.
+      foreach ($field_instances as $field_instance) {
+        $query = new EntityFieldQuery();
+        $query->entityCondition('entity_type', $field_instance['entity_type'])
+          ->entityCondition('bundle', $field_instance['bundle'])
+          ->fieldCondition($field_instance['field_name'], 'borgerdk_article_entity_id', $microarticle->article_id);
+
+        $result = $query->execute();
+        if (isset($result['node'])) {
+          $nids = array_keys($result['node']);
+          $affected_nodes = entity_load('node', $nids);
+
+          foreach ($affected_nodes as $affected_node) {
+            foreach ($affected_node->{$field_instance['field_name']}['und'] as $delta => $node_field) {
+              $enabled_microarticles = $affected_node->{$field_instance['field_name']}['und'][$delta]['borgerdk_microarticle_entity_ids'];
+              $enabled_microarticles = json_decode($enabled_microarticles);
+              // Getting key to unset.
+              $unset_ma_key = array_search($microarticle->entity_id, $enabled_microarticles);
+              unset($enabled_microarticles[$unset_ma_key]);
+
+              $enabled_microarticles = array_values($enabled_microarticles);
+              $affected_node->{$field_instance['field_name']}['und'][$delta]['borgerdk_microarticle_entity_ids'] = json_encode($enabled_microarticles);
+            }
+            node_save($affected_node);
+          }
+        }
+      }
+    }
   }
 }

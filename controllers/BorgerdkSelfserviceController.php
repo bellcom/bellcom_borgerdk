@@ -14,11 +14,18 @@ class BorgerdkSelfserviceController extends BorgerdkAbstractEntityController {
    * @return bool|int
    */
   public function save($entity, DatabaseTransaction $transaction = NULL) {
-    if (isset($entity->is_new) && $entity->is_new && !isset($entity->entity_id)) {
+    if (!isset($entity->entity_id)) {
       $entity->entity_id = parent::generateEntityId($entity);
     }
+
     global $user;
     $entity->uid = $user->uid;
+
+    if (isset($entity->is_new) && $entity->is_new && !$entity->microarticle_id) {
+      //if we are adding new microarticle, automatically enable it for all nodes, referencing that article
+      $this->addSelfserviceReferences($entity);
+    }
+
     //default setting = creating a new revisiton is not mentioned otherwise
     if (!isset($entity->is_new_revision)) {
       $entity->is_new_revision = TRUE;
@@ -156,5 +163,107 @@ class BorgerdkSelfserviceController extends BorgerdkAbstractEntityController {
     }
 
     return parent::buildContent($entity, $view_mode, $langcode, $content);
+  }
+
+  /**
+   * This function handles calls to removeSelfserviceReferences.
+   * Then it calls to the parent class to do the actual entity deletion.
+   *
+   * @param $ids
+   * @param DatabaseTransaction $transaction
+   */
+  public function delete($ids, DatabaseTransaction $transaction = NULL) {
+    // Removing selfservice references.
+    $selfservices_to_delete = borgerdk_selfservice_load_multiple($ids);
+    foreach ($selfservices_to_delete as $ss_to_delete) {
+      $this->removeSelfserviceReferences($ss_to_delete);
+    }
+
+    // Finally letting selfservice to be deleted.
+    parent::delete($ids, $transaction);
+  }
+
+  /**
+   * This function adds the selfservice references to the affected nodes.
+   * Affected node is any nodes referencing the article of selfservice.
+   *
+   * @param $selfservice
+   */
+  protected function addSelfserviceReferences($selfservice) {
+    // Getting all fields of type borgerdk_article_field.
+    $fields = field_read_fields(array('type' => 'borgerdk_article_field'));
+    foreach ($fields as $field) {
+      $field_instances = field_read_instances(array('field_id' => $field['id']));
+
+      // Looping through fields to get affected nodes.
+      foreach ($field_instances as $field_instance) {
+        $query = new EntityFieldQuery();
+        $query->entityCondition('entity_type', $field_instance['entity_type'])
+          ->entityCondition('bundle', $field_instance['bundle'])
+          ->fieldCondition($field_instance['field_name'], 'borgerdk_article_entity_id', $selfservice->article_id);
+
+        $result = $query->execute();
+        if (isset($result['node'])) {
+          $nids = array_keys($result['node']);
+          $affected_nodes = entity_load('node', $nids);
+
+          foreach ($affected_nodes as $affected_node) {
+            foreach ($affected_node->{$field_instance['field_name']}['und'] as $delta => $node_field) {
+              $enabled_selfservices = $affected_node->{$field_instance['field_name']}['und'][$delta]['borgerdk_selfservice_entity_ids'];
+              $enabled_selfservices = json_decode($enabled_selfservices);
+
+              // Adding this selfservice
+              $enabled_selfservices[] = $selfservice->entity_id;
+
+              $enabled_selfservices = array_values($enabled_selfservices);
+              $affected_node->{$field_instance['field_name']}['und'][$delta]['borgerdk_selfservice_entity_ids'] = json_encode($enabled_selfservices);
+            }
+            node_save($affected_node);
+          }
+        }
+      }
+    }
+  }
+
+  /**
+   * This function removes the selfservice references from the affected nodes.
+   * Affected node is any nodes referencing the article of selfservice.
+   *
+   * @param $selfservice
+   */
+  protected function removeSelfserviceReferences($selfservice) {
+    // Getting all fields of type borgerdk_article_field.
+    $fields = field_read_fields(array('type' => 'borgerdk_article_field'));
+    foreach ($fields as $field) {
+      $field_instances = field_read_instances(array('field_id' => $field['id']));
+
+      // Looping through fields to get affected nodes.
+      foreach ($field_instances as $field_instance) {
+        $query = new EntityFieldQuery();
+        $query->entityCondition('entity_type', $field_instance['entity_type'])
+          ->entityCondition('bundle', $field_instance['bundle'])
+          ->fieldCondition($field_instance['field_name'], 'borgerdk_article_entity_id', $selfservice->article_id);
+
+        $result = $query->execute();
+        if (isset($result['node'])) {
+          $nids = array_keys($result['node']);
+          $affected_nodes = entity_load('node', $nids);
+
+          foreach ($affected_nodes as $affected_node) {
+            foreach ($affected_node->{$field_instance['field_name']}['und'] as $delta => $node_field) {
+              $enabled_selfservices = $affected_node->{$field_instance['field_name']}['und'][$delta]['borgerdk_selfservice_entity_ids'];
+              $enabled_selfservices = json_decode($enabled_selfservices);
+              // Getting key to unset.
+              $unset_ss_key = array_search($selfservice->entity_id, $enabled_selfservices);
+              unset($enabled_selfservices[$unset_ss_key]);
+
+              $enabled_selfservices = array_values($enabled_selfservices);
+              $affected_node->{$field_instance['field_name']}['und'][$delta]['borgerdk_selfservice_entity_ids'] = json_encode($enabled_selfservices);
+            }
+            node_save($affected_node);
+          }
+        }
+      }
+    }
   }
 }

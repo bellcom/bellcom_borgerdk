@@ -38,6 +38,12 @@ class BorgerdkArticleController extends BorgerdkAbstractEntityController {
       $entity->uid = $user->uid;
     }
 
+    // If we are resaving the existing article, update the weight of its custom microarticles and selfservices
+    if (!isset($entity->is_new) || !$entity->is_new) {
+      $this->updateCustomMicroarticlesWeight($entity);
+      $this->updateCustomSelfservicesWeight($entity);
+    }
+
     return parent::save($entity, $transaction);
   }
 
@@ -289,5 +295,65 @@ class BorgerdkArticleController extends BorgerdkAbstractEntityController {
     }
 
     parent::delete($ids, $transaction);
+  }
+
+  /**
+   * Updates the weight of the custom microarticles so they they are placed after the imported microarticles.
+   *
+   * @param $article
+   */
+  protected function updateCustomMicroarticlesWeight($article) {
+    //getting imported microarticles only
+    $imported_mms = borgerdk_microarticle_load_multiple(FALSE, array('article_id' => $article->entity_id, 'uid' => 0));
+
+    //finding the max weight
+    $imported_mm_max_weight = 0;
+    foreach ($imported_mms as $mm) {
+      if ($mm->weight > $imported_mm_max_weight) {
+        $imported_mm_max_weight = $mm->weight;
+      }
+    }
+
+    $all_mms = borgerdk_microarticle_load_multiple_sorted(FALSE, array('article_id' => $article->entity_id), TRUE);
+
+    //finding the custom microarticles by difference between all and imported microarticles
+    $custom_mms = array_diff_key($all_mms, $imported_mms);
+
+    //updating the weight for custom microarticles
+    foreach($custom_mms as $mm) {
+      $imported_mm_max_weight++;
+      $mm->weight = $imported_mm_max_weight;
+      borgerdk_microarticle_save($mm);
+    }
+  }
+
+  /**
+   * Updates the weight of the custom selfservices so they they are placed after the imported selfservices.
+   *
+   * @param $article
+   */
+  protected function updateCustomSelfservicesWeight($article) {
+    //getting imported selfservices only
+    $imported_ss = borgerdk_selfservice_load_multiple(FALSE, array('article_id' => $article->entity_id, 'uid' => 0));
+
+    //finding the max weight
+    $imported_ss_max_weight = 0;
+    foreach ($imported_ss as $ss) {
+      if ($ss->weight > $imported_ss_max_weight) {
+        $imported_ss_max_weight = $ss->weight;
+      }
+    }
+
+    $all_ss = borgerdk_selfservice_load_multiple_sorted(FALSE, array('article_id' => $article->entity_id), TRUE);
+
+    //finding the custom selfservices by difference between all and imported microarticles
+    $custom_ss = array_diff_key($all_ss, $imported_ss);
+
+    //updating the weight for custom microarticles
+    foreach($custom_ss as $ss) {
+      $imported_ss_max_weight++;
+      $ss->weight = $imported_ss_max_weight;
+      borgerdk_selfservice_save($ss);
+    }
   }
 }
