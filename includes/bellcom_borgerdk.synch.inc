@@ -62,16 +62,17 @@ function bellcom_borgerdk_fetch_articles($lang = 'da') {
 
   // Notify about each article being removed from the source feed.
   foreach($articles_to_delete as $article_to_delete) {
-    $affected_nodes = bellcom_borgerdk_reminder_get_affected_nodes($article_to_delete);
-
-    //if there is no affected nodes, it is safe to delete the article
-    if (empty($affected_nodes)) {
-      borgerdk_article_delete($article_to_delete);
-    } else {
-      if (variable_get('bellcom_borgerdk_reminder_email_enabled')) {
+    // Check if we want to send notifications.
+    if (variable_get('bellcom_borgerdk_reminder_email_enabled')) {
+      $affected_nodes = bellcom_borgerdk_reminder_get_affected_nodes($article_to_delete);
+      // If there are affected nodes, remind about them.
+      if (!empty($affected_nodes)) {
         bellcom_borgerdk_reminder_send_email($article_to_delete, $affected_nodes);
       }
     }
+
+    // Finally delete the article.
+    borgerdk_article_delete($article_to_delete);
   }
 }
 

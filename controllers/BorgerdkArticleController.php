@@ -285,6 +285,9 @@ class BorgerdkArticleController extends BorgerdkAbstractEntityController {
    */
   public function delete($ids, DatabaseTransaction $transaction = NULL) {
     foreach ($ids as $id) {
+      //deleting the article itself from the reference fields
+      $this->removeArticleReference($id);
+
       //deleting self-services
       $selfservices = borgerdk_selfservice_load_multiple(FALSE, array('article_id' => $id), TRUE);
       borgerdk_selfservice_delete_multiple(array_keys($selfservices));
@@ -354,6 +357,43 @@ class BorgerdkArticleController extends BorgerdkAbstractEntityController {
       $imported_ss_max_weight++;
       $ss->weight = $imported_ss_max_weight;
       borgerdk_selfservice_save($ss);
+    }
+  }
+
+  /**
+   * This function removes the article references from the affected nodes.
+   * Affected node is any nodes referencing the article.
+   *
+   * @param $article_id
+   */
+  protected function removeArticleReference($article_id) {
+    $fields = field_read_fields(array('type' => 'borgerdk_article_field'));
+    foreach ($fields as $field) {
+      $field_instances = field_read_instances(array('field_id' => $field['id']));
+
+      // Looping through fields to get affected nodes.
+      foreach ($field_instances as $field_instance) {
+        $query = new EntityFieldQuery();
+        $query->entityCondition('entity_type', $field_instance['entity_type'])
+          ->entityCondition('bundle', $field_instance['bundle'])
+          ->fieldCondition($field_instance['field_name'], 'borgerdk_article_entity_id', $article_id);
+
+        $result = $query->execute();
+        if (isset($result['node'])) {
+          $nids = array_keys($result['node']);
+          $affected_nodes = node_load_multiple($nids);
+
+          foreach ($affected_nodes as $affected_node) {
+            foreach ($affected_node->{$field_instance['field_name']}['und'] as $delta => $node_field) {
+              if ($node_field['borgerdk_article_entity_id'] == $article_id) {
+                // Unsetting reference.
+                unset($affected_node->{$field_instance['field_name']}['und'][$delta]);
+              }
+            }
+            node_save($affected_node);
+          }
+        }
+      }
     }
   }
 }
