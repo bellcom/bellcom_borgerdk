@@ -9,8 +9,64 @@ function bellcom_borgerdk_field_info() {
       'description' => t('This field adds a connection to Borger.dk articles'),
       'default_widget' => 'borgerdk_article_widget',
       'default_formatter' => 'borgerdk_article_default_formatter',
+      'property_type' => 'borgerdk_article_reference',
+      'property_callbacks' => array('bellcom_borgerdk_article_reference_info_callback')
     ),
   );
+}
+
+/**
+ * Callback to alter the property info of borgerdk_article_reference fields.
+ *
+ * @see bellcom_borgerdk_field_info().
+ */
+function bellcom_borgerdk_article_reference_info_callback(&$info, $entity_type, $field, $instance, $field_type) {
+  $property = & $info[$entity_type]['bundles'][$instance['bundle']]['properties'][$field['field_name']];
+  $property['getter callback'] = 'entity_metadata_field_verbatim_get';
+  $property['setter callback'] = 'entity_metadata_field_verbatim_set';
+  unset($property['query callback']);
+
+  $property['property info']['borgerdk_article_entity_id'] = array(
+    'type' => 'borgerdk_article',
+    'label' => t('Borger.dk article reference'),
+    'description' => 'Reference to Borger.dk article',
+  );
+
+  $property['property info']['borgerdk_microarticle_entity_ids'] = array(
+    'type' => 'list<borgerdk_microarticle>',
+    'label' => t('Borger.dk microarticle reference'),
+    'description' => 'Reference to Borger.dk microarticle',
+    'getter callback' => 'bellcom_borgerdk_field_microarticles_extract',
+  );
+
+  $property['property info']['borgerdk_selfservice_entity_ids'] = array(
+    'type' => 'list<borgerdk_selfservice>',
+    'label' => t('Borger.dk selfservice reference'),
+    'description' => 'Reference to Borger.dk selfservice',
+    'getter callback' => 'bellcom_borgerdk_field_selfservices_extract',
+  );
+}
+
+/**
+ * Getter callback to return microarticle entities as list of entity ids.
+ *
+ * @param $item
+ * @return mixed
+ */
+function bellcom_borgerdk_field_microarticles_extract($item) {
+  $values = json_decode($item['borgerdk_microarticle_entity_ids']);
+  return $values;
+}
+
+/**
+ * Getter callback to return selfservice entities as list of entity ids.
+ *
+ * @param $item
+ * @return mixed
+ */
+function bellcom_borgerdk_field_selfservices_extract($item) {
+  $values = json_decode($item['borgerdk_selfservice_entity_ids']);
+  return $values;
 }
 
 /**
