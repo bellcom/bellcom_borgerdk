@@ -18,6 +18,12 @@ function bellcom_borgerdk_fetch_articles($lang = 'da') {
   $articles = new GetAllArticles($client);
   $articles = $articles->getResultFormatted();
 
+  if (empty($articles)) {
+    watchdog('Bellcom Borger.dk', 'No article returned on fetch for lang: %lang. Check connection to external webservice',
+      array('%lang' => $lang), WATCHDOG_WARNING);
+    return;
+  }
+
   //adding lang suffix
   $exisiting_articles_keys = array_keys($articles);
   foreach ($exisiting_articles_keys as &$k) {
