@@ -19,7 +19,9 @@ class BorgerdkSelfserviceController extends BorgerdkAbstractEntityController {
     }
 
     global $user;
-    $entity->uid = $user->uid;
+    if (!isset($entity->uid)){
+      $entity->uid = $user->uid;
+    }
 
     if (isset($entity->is_new) && $entity->is_new && !$entity->microarticle_id) {
       //if we are adding new microarticle, automatically enable it for all nodes, referencing that article
