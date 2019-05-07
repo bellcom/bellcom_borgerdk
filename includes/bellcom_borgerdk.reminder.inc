@@ -62,7 +62,7 @@ function bellcom_borgerdk_reminder_send_email($article, $affected_nodes) {
   $body = str_replace($search, $replace, $body_template);
   $body = ucfirst($body);
 
-  $from = variable_get('system_mail');
+  $from = variable_get('site_mail');
   $params = array(
     'subject' => $subject,
     'body' => $body,
