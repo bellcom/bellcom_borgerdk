@@ -86,7 +86,7 @@ function bellcom_borgerdk_cron() {
     }
   }
 
-bellcom_borgerdk_microarticle_revision_cleanup();
+bellcom_borgerdk_entity_revision_cleanup();
 
 }
 
@@ -167,12 +167,12 @@ function bellcom_borgerdk_mail($key, &$message, $params) {
  * @return array
  *   Array of nids.
  */
-function bellcom_borgerdk_microarticle_revision_delete_candidates($max_revisions) {
+function bellcom_borgerdk_entity_revision_delete_candidates($entity_type, $max_revisions) {
   $params = array(
     ':max_revisions' => $max_revisions,
   );
   $result = db_query('SELECT r.entity_id, count(*) as total
-                     FROM {borgerdk_microarticle_revision} r
+                     FROM {' . $entity_type . '_revision} r
                      GROUP BY r.entity_id
                      HAVING count(*) > :max_revisions
                      ORDER BY total DESC', $params);
@@ -191,9 +191,9 @@ function bellcom_borgerdk_microarticle_revision_delete_candidates($max_revisions
  *   may be increased or decreased for performance.
  *
  */
-function _bellcom_borgerdk_microarticle_revision_delete($entity_id, $revisions_to_keep, $max) {
+function _bellcom_borgerdk_entity_revision_delete($entity_type, $entity_id, $revisions_to_keep, $max) {
 
-  $revisions = _bellcom_borgerdk_microarticle_revision_list($entity_id);
+  $revisions = _bellcom_borgerdk_entity_revision_list($entity_type, $entity_id);
   // Keep recent revisions.
   $revisions = array_slice($revisions, $revisions_to_keep);
   // Reverse the list so we start deleting oldest revisions first.
@@ -211,7 +211,7 @@ function _bellcom_borgerdk_microarticle_revision_delete($entity_id, $revisions_t
   }
 
   if (is_array(($revisions_to_delete))) {
-    db_delete('borgerdk_microarticle_revision')
+    db_delete($entity_type.'_revision')
         ->condition('entity_id', $revision->entity_id)
         ->condition('vid', $revisions_to_delete, 'IN')
         ->execute();
@@ -228,9 +228,9 @@ function _bellcom_borgerdk_microarticle_revision_delete($entity_id, $revisions_t
  *   An associative array keyed by node revision number.
  */
 
-function _bellcom_borgerdk_microarticle_revision_list($entity_id) {
+function _bellcom_borgerdk_entity_revision_list($entity_type, $entity_id) {
   $revisions = array();
-  $result = db_query('SELECT r.vid, r.entity_id,  m.vid AS current_vid FROM {borgerdk_microarticle_revision} r LEFT JOIN {borgerdk_microarticle} m ON r.vid = m.vid '
+  $result = db_query('SELECT r.vid, r.entity_id,  m.vid AS current_vid FROM {' . $entity_type . '_revision} r LEFT JOIN {' . $entity_type . '} m ON r.vid = m.vid '
       . 'WHERE r.entity_id = :entity_id ORDER BY r.vid DESC', array(
     ':entity_id' =>$entity_id,
   ));
@@ -243,14 +243,23 @@ function _bellcom_borgerdk_microarticle_revision_list($entity_id) {
 /*
  * Function for delete old revisions in cronb
  */
-function bellcom_borgerdk_microarticle_revision_cleanup() {
-  if (variable_get('bellcom_borgerdk_microarticle_revision_cleanup_enabled', FALSE)) {
-    $max = (int) variable_get('bellcom_borgerdk_microarticle_revision_delete_cron', 50);
-    $revisions_to_keep = variable_get('bellcom_borgerdk_microarticle_revision_cleanup_number', 10);
-    $candidate_ids = bellcom_borgerdk_microarticle_revision_delete_candidates($revisions_to_keep);
-    if (!empty($candidate_ids)) {
-      foreach ($candidate_ids as $entity_id) {
-        _bellcom_borgerdk_microarticle_revision_delete($entity_id, $revisions_to_keep, $max);
+function bellcom_borgerdk_entity_revision_cleanup() {
+  if (variable_get('bellcom_borgerdk_entity_revision_cleanup_enabled', FALSE)) {
+    $max = (int) variable_get('bellcom_borgerdk_entity_revision_delete_cron', 50);
+    $revisions_to_keep = variable_get('bellcom_borgerdk_entity_revision_cleanup_number', 10);
+
+    //remove borgerdk_microarticle_revisions
+    $microarticle_candidate_ids = bellcom_borgerdk_entity_revision_delete_candidates('borgerdk_microarticle', $revisions_to_keep);
+    if (!empty($microarticle_candidate_ids)) {
+      foreach ($microarticle_candidate_ids as $entity_id) {
+        _bellcom_borgerdk_entity_revision_delete('borgerdk_microarticle', $entity_id, $revisions_to_keep, $max);
+      }
+    }
+    //remove borgerdk_selfservice_revision
+    $selfservice_candidate_ids = bellcom_borgerdk_entity_revision_delete_candidates('borgerdk_selfservice', $revisions_to_keep);
+    if (!empty($selfservice_candidate_ids)) {
+      foreach ($selfservice_candidate_ids as $entity_id) {
+        _bellcom_borgerdk_entity_revision_delete('borgerdk_selfservice', $entity_id, $revisions_to_keep, $max);
       }
     }
   }
