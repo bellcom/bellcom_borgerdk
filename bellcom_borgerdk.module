@@ -53,6 +53,9 @@ function bellcom_borgerdk_menu() {
  * Add the articles that need to be resynched to the dedicated queue.
  */
 function bellcom_borgerdk_cron() {
+
+  bellcom_borgerdk_entity_revision_cleanup();
+
   $queue = DrupalQueue::get(BELLCOM_BORGERDK_QUEUE);
 
   if ($queue_size = $queue->numberOfItems()) {
@@ -85,9 +88,6 @@ function bellcom_borgerdk_cron() {
       watchdog('Bellcom Borger.dk', $e->getMessage(), WATCHDOG_ERROR);
     }
   }
-
-bellcom_borgerdk_entity_revision_cleanup();
-
 }
 
 /**
