@@ -198,20 +198,23 @@ function _bellcom_borgerdk_microarticle_revision_delete($entity_id, $revisions_t
   $revisions = array_slice($revisions, $revisions_to_keep);
   // Reverse the list so we start deleting oldest revisions first.
   $revisions = array_reverse($revisions);
-  $deleted_revisions_count = 0;
+  $revisions_to_delete = array();
   foreach ($revisions as $revision) {
     if ($revision->vid == $revision->surrent_vid) {
       continue;
     }
-    db_delete('borgerdk_microarticle_revision')
-      ->condition('entity_id', $revision->entity_id)
-      ->condition('vid', $revision->vid)
-      ->execute();
-    $deleted_revisions_count++;
-      // Stop deleting if we hit the limit per cron run.
-    if ($deleted_revisions_count == $max) {
+    $revisions_to_delete[] = $revision->vid;
+    // Stop deleting if we hit the limit per cron run.
+    if (count($revisions_to_delete) == $max) {
       break;
     }
+  }
+
+  if (is_array(($revisions_to_delete))) {
+    db_delete('borgerdk_microarticle_revision')
+        ->condition('entity_id', $revision->entity_id)
+        ->condition('vid', $revisions_to_delete, 'IN')
+        ->execute();
   }
 }
 
@@ -241,8 +244,8 @@ function _bellcom_borgerdk_microarticle_revision_list($entity_id) {
  * Function for delete old revisions in cronb
  */
 function bellcom_borgerdk_microarticle_revision_cleanup() {
-  if (variable_get('bbb_enabled', FALSE)) {
-    $max = variable_get('bellcom_borgerdk_microarticle_revision_delete_cron', 50);
+  if (variable_get('bellcom_borgerdk_microarticle_revision_cleanup_enabled', FALSE)) {
+    $max = (int) variable_get('bellcom_borgerdk_microarticle_revision_delete_cron', 50);
     $revisions_to_keep = variable_get('bellcom_borgerdk_microarticle_revision_cleanup_number', 10);
     $candidate_ids = bellcom_borgerdk_microarticle_revision_delete_candidates($revisions_to_keep);
     if (!empty($candidate_ids)) {
