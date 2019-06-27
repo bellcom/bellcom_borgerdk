@@ -95,14 +95,14 @@ function bellcom_borgerdk_settings_form($form, $form_state) {
     '#type' => 'checkbox',
     '#title' => t('Enable deletion of old revisions of borgerdk entities'),
     '#default_value' => variable_get('bellcom_borgerdk_entity_revision_cleanup_enabled', FALSE),
-    '#description' => t('If enabled, old old revisions of microarticles will be deleted.'),
+    '#description' => t('If enabled, old old revisions of microarticles and selfservices will be deleted.'),
   );
 
-  $form['bellcom_borgerdk_entity_revision_cleanup']['bellcom_borgerdk_entity_revision_cleanup_number'] = array(
+  $form['bellcom_borgerdk_entity_revision_cleanup']['bellcom_borgerdk_entity_revision_max_number'] = array(
     '#type' => 'textfield',
     '#title' => t('Maximum number of revisions to keep'),
     '#description' => t('Oldest revisions will be deleted when the total amount surpases this value. Set it to 1 to remove all revisions.'),
-    '#default_value' => variable_get('bellcom_borgerdk_entity_revision_cleanup_number', 10),
+    '#default_value' => variable_get('bellcom_borgerdk_entity_revision_max_number', 10),
     '#states' => array(
       'visible' => array(
         ':input[name="bellcom_borgerdk_entity_revision_cleanup_enabled"]' => array('checked' => TRUE),
@@ -110,12 +110,12 @@ function bellcom_borgerdk_settings_form($form, $form_state) {
     ),
   );
   $options_cron = array(10, 20, 50, 100, 200, 500, 1000);
-  $form['bellcom_borgerdk_entity_revision_cleanup']['bellcom_borgerdk_entity_revision_delete_cron'] = array(
+  $form['bellcom_borgerdk_entity_revision_cleanup']['bellcom_borgerdk_entity_revision_delete_per_cron'] = array(
     '#type' => 'select',
     '#title' => t('How many revisions do you want to delete per cron run?'),
     '#description' => t('Deleting revisions is a database intensive task. Increase this value if you think that the server can handle more deletions per cron run.'),
     '#options' => array_combine($options_cron, $options_cron),
-    '#default_value' => variable_get('bellcom_borgerdk_entity_revision_delete_cron', 50),
+    '#default_value' => variable_get('bellcom_borgerdk_entity_revision_delete_per_cron', 50),
     '#states' => array(
       'visible' => array(
         ':input[name="bellcom_borgerdk_entity_revision_cleanup_enabled"]' => array('checked' => TRUE),

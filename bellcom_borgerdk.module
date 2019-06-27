@@ -51,6 +51,7 @@ function bellcom_borgerdk_menu() {
  *
  * fetches the latest info about articles.
  * Add the articles that need to be resynched to the dedicated queue.
+ * Deleted old microarticles and selfservices revisions.
  */
 function bellcom_borgerdk_cron() {
 
@@ -157,12 +158,12 @@ function bellcom_borgerdk_mail($key, &$message, $params) {
 }
 
 /**
- * Helper function to return the list of candidate nids.
+ * Helper function to return the list of entities ids  for  that need be deleted old revisions.
  *
- * @param string $content_type
- *   A content type machine name.
+ * @param string $entity_type
+ *   A entity type machine name.
  * @param int $max_revisions
- *   Match nodes with a total amount of revisions higher than this number.
+ *   Match entities with a total amount of revisions higher than this number.
  *
  * @return array
  *   Array of nids.
@@ -198,36 +199,32 @@ function _bellcom_borgerdk_entity_revision_delete($entity_type, $entity_id, $rev
   $revisions = array_slice($revisions, $revisions_to_keep);
   // Reverse the list so we start deleting oldest revisions first.
   $revisions = array_reverse($revisions);
-  $revisions_to_delete = array();
+  $deleted_revisions = 0;
   foreach ($revisions as $revision) {
-    if ($revision->vid == $revision->surrent_vid) {
+    if ($revision->vid == $revision->current_vid) {
       continue;
     }
-    $revisions_to_delete[] = $revision->vid;
-    // Stop deleting if we hit the limit per cron run.
+    call_user_func($entity_type . '_delete_revision',  $revision->vid);
+
+    $deleted_revisions++;
+      // Stop deleting if we hit the limit per cron run.
     if (count($revisions_to_delete) == $max) {
       break;
     }
   }
-
-  if (is_array(($revisions_to_delete))) {
-    db_delete($entity_type.'_revision')
-        ->condition('entity_id', $revision->entity_id)
-        ->condition('vid', $revisions_to_delete, 'IN')
-        ->execute();
-  }
 }
 
 /**
- * Returns a list of all the existing revision .
+ * Returns a list of all the existing revision.
  *
+ * @param int $entity_type
+ *   Type of entity.
  * @param int $entity_id
  *   The Entity ID.
  *
  * @return
- *   An associative array keyed by node revision number.
+ *   An associative array keyed by entity revision number.
  */
-
 function _bellcom_borgerdk_entity_revision_list($entity_type, $entity_id) {
   $revisions = array();
   $result = db_query('SELECT r.vid, r.entity_id,  m.vid AS current_vid FROM {' . $entity_type . '_revision} r LEFT JOIN {' . $entity_type . '} m ON r.vid = m.vid '
@@ -240,13 +237,13 @@ function _bellcom_borgerdk_entity_revision_list($entity_type, $entity_id) {
   return $revisions;
 }
 
-/*
- * Function for delete old revisions in cronb
+/**
+ * Function for delete old revisions in cron.
  */
 function bellcom_borgerdk_entity_revision_cleanup() {
   if (variable_get('bellcom_borgerdk_entity_revision_cleanup_enabled', FALSE)) {
-    $max = (int) variable_get('bellcom_borgerdk_entity_revision_delete_cron', 50);
-    $revisions_to_keep = variable_get('bellcom_borgerdk_entity_revision_cleanup_number', 10);
+    $max = (int) variable_get('bellcom_borgerdk_entity_revision_delete_per_cron', 50);
+    $revisions_to_keep = variable_get('bellcom_borgerdk_entity_revision_max_number', 10);
 
     //remove borgerdk_microarticle_revisions
     $microarticle_candidate_ids = bellcom_borgerdk_entity_revision_delete_candidates('borgerdk_microarticle', $revisions_to_keep);
