@@ -183,6 +183,8 @@ function bellcom_borgerdk_entity_revision_delete_candidates($entity_type, $max_r
 /**
  * Deletes a entities revisions.
  *
+ * @param int $entity_type
+ *   The type of entity.
  * @param int $entity_id
  *   The entity ID whoose oldest revisions will be deleted.
  * @param int $revisions_to_keep
