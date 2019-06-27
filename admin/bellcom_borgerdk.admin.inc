@@ -95,7 +95,7 @@ function bellcom_borgerdk_settings_form($form, $form_state) {
     '#type' => 'checkbox',
     '#title' => t('Enable deletion of old revisions of borgerdk entities'),
     '#default_value' => variable_get('bellcom_borgerdk_entity_revision_cleanup_enabled', FALSE),
-    '#description' => t('If enabled, old old revisions of microarticles and selfservices will be deleted.'),
+    '#description' => t('If enabled, old revisions of microarticles and selfservices will be deleted.'),
   );
 
   $form['bellcom_borgerdk_entity_revision_cleanup']['bellcom_borgerdk_entity_revision_max_number'] = array(

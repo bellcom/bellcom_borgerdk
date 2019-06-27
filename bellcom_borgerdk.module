@@ -158,7 +158,7 @@ function bellcom_borgerdk_mail($key, &$message, $params) {
 }
 
 /**
- * Helper function to return the list of entities ids  for  that need be deleted old revisions.
+ * Helper function to return the list of entities ids for that need be deleted old revisions.
  *
  * @param string $entity_type
  *   A entity type machine name.
@@ -166,7 +166,7 @@ function bellcom_borgerdk_mail($key, &$message, $params) {
  *   Match entities with a total amount of revisions higher than this number.
  *
  * @return array
- *   Array of nids.
+ *   Array of entity ids.
  */
 function bellcom_borgerdk_entity_revision_delete_candidates($entity_type, $max_revisions) {
   $params = array(
@@ -181,7 +181,7 @@ function bellcom_borgerdk_entity_revision_delete_candidates($entity_type, $max_r
 }
 
 /**
- * Deletes a microarticle revisions.
+ * Deletes a entities revisions.
  *
  * @param int $entity_id
  *   The entity ID whoose oldest revisions will be deleted.
