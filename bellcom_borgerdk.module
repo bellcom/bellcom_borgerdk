@@ -209,8 +209,9 @@ function _bellcom_borgerdk_entity_revision_delete($entity_type, $entity_id, $rev
     call_user_func($entity_type . '_delete_revision',  $revision->vid);
 
     $deleted_revisions++;
+
       // Stop deleting if we hit the limit per cron run.
-    if (count($revisions_to_delete) == $max) {
+    if ($deleted_revisions == $max) {
       break;
     }
   }
