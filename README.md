@@ -18,3 +18,12 @@ drush composer-manager install
 drush scr scripts/bellcom_borgerdk.cron.php
 ```
 3. Check that all the content is imported by going to `admin/content/borgerdk-articles`, and checking that no articles has asterix __(\*)__ next to it's name.
+
+## To first cleanup microarticle and selfservices
+Functionality for cleanup old microarticle and selfservices revisions was added into new version of bellcom_borgerdk moduel
+If database tables borgerdk_microarticle_revision and borger_dk_selfservice_revision have a huge amount of records, recomended  to do cleanup for these tables directly in database at first
+SQL queries for DB cleanup
+```
+delete from borgerdk_microarticle_revision where vid not in (select vid from borgerdk_microarticle) LIMIT 1000;
+delete from borgerdk_selfservice_revision where vid not in (select vid from borgerdk_selfservice) LIMIT 1000;
+```
