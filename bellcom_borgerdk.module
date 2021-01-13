@@ -65,8 +65,13 @@ function bellcom_borgerdk_cron() {
   }
   else {
     try {
-      bellcom_borgerdk_fetch_articles('da');
-      bellcom_borgerdk_fetch_articles('en');
+      $import_languages = variable_get('bellcom_borgerdk_entity?imported_languages', array('en', 'da'));
+      if ($import_languages['da'] === 'da') {
+        bellcom_borgerdk_fetch_articles('da');
+      }
+      if ($import_languages['en'] === 'en') {
+        bellcom_borgerdk_fetch_articles('en');
+      }
 
       // Maximum N articles to process.
       $articles_da = bellcom_borgedk_get_resynch_articles('da');
