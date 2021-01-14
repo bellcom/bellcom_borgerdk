@@ -65,7 +65,7 @@ function bellcom_borgerdk_cron() {
   }
   else {
     try {
-      $import_languages = variable_get('bellcom_borgerdk_entity?imported_languages', array('en', 'da'));
+      $import_languages = variable_get('bellcom_borgerdk_entity_imported_languages', array('en', 'da'));
       if ($import_languages['da'] === 'da') {
         bellcom_borgerdk_fetch_articles('da');
       }
@@ -74,17 +74,20 @@ function bellcom_borgerdk_cron() {
       }
 
       // Maximum N articles to process.
-      $articles_da = bellcom_borgedk_get_resynch_articles('da');
-      $chunks = array_chunk($articles_da, BELLCOM_BORGERDK_QUEUE_CHUNK_SIZE, TRUE);
-      foreach ($chunks as $chunk) {
-        $queue->createItem(array('lang' => 'da', 'items' => $chunk));
+      if ($import_languages['da'] === 'da') {
+        $articles_da = bellcom_borgedk_get_resynch_articles('da');
+        $chunks = array_chunk($articles_da, BELLCOM_BORGERDK_QUEUE_CHUNK_SIZE, TRUE);
+        foreach ($chunks as $chunk) {
+          $queue->createItem(array('lang' => 'da', 'items' => $chunk));
+        }
       }
-
-      // Maximum N articles to process.
-      $articles_en = bellcom_borgedk_get_resynch_articles('en');
-      $chunks = array_chunk($articles_en, BELLCOM_BORGERDK_QUEUE_CHUNK_SIZE, TRUE);
-      foreach ($chunks as $chunk) {
-        $queue->createItem(array('lang' => 'en', 'items' => $chunk));
+      if ($import_languages['en'] === 'en') {
+        // Maximum N articles to process.
+        $articles_en = bellcom_borgedk_get_resynch_articles('en');
+        $chunks = array_chunk($articles_en, BELLCOM_BORGERDK_QUEUE_CHUNK_SIZE, TRUE);
+        foreach ($chunks as $chunk) {
+          $queue->createItem(array('lang' => 'en', 'items' => $chunk));
+        }
       }
 
       watchdog('Bellcom Borger.dk', 'Borger article queue created (@cnt articles pending update).',

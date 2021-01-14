@@ -128,13 +128,12 @@ function bellcom_borgerdk_settings_form($form, $form_state) {
     '#collapsible' => TRUE,
     '#collapsed' => FALSE,
   );
-  $form['bellcom_borgerdk_entity_languages']['bellcom_borgerdk_entity?imported_languages'] = array(
+  $form['bellcom_borgerdk_entity_languages']['bellcom_borgerdk_entity_imported_languages'] = array(
     '#title' => t('Select languages for import articlies'),
     '#type' => 'checkboxes',
     '#options' => array('en' => t('English'), 'da' => t('Danish')),
-    '#default_value' => variable_get('bellcom_borgerdk_entity?imported_languages', array('en', 'da'))
+    '#default_value' => variable_get('bellcom_borgerdk_entity_imported_languages', array('en', 'da'))
   );
-  dpm(variable_get('bellcom_borgerdk_entity?imported_languages', array('en', 'da')));
   return system_settings_form($form);
 }
 
