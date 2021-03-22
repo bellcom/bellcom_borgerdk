@@ -419,3 +419,18 @@ function bellcom_borgerdk_update_7102() {
     }
   }
 }
+
+/**
+ * Increase header field length.
+ *
+ */
+function bellcom_borgerdk_update_7103() {
+ //changing field's type to varchar
+  db_change_field('borgerdk_article', 'header', 'header', array(
+    'description' => 'A header for the item, taken from Borger.dk',
+    'type' => 'varchar',
+    'length' => 500,
+    'not null' => FALSE,
+    'default' => '',
+  ));
+}
